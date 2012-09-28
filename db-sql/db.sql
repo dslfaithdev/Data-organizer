@@ -6,10 +6,6 @@ DROP TABLE message;
 DROP TABLE fb_user;
 DROP TABLE fb_page;
 
-DROP SCHEMA fb_wallpost cascade;
-create schema fb_wallpost;
-set search_path to fb_wallpost;
-
 CREATE TABLE page (
 	id BIGINT NOT NULL,
 	name TEXT,
