@@ -4,7 +4,7 @@ DROP TABLE comment;
 DROP TABLE likedby;
 DROP TABLE message;
 DROP TABLE fb_user;
-DROP TABLE fb_page;
+DROP TABLE page;
 
 CREATE TABLE page (
 	id BIGINT NOT NULL,
