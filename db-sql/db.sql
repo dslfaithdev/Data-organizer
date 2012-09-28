@@ -15,7 +15,7 @@ CREATE TABLE fb_page (
 	name TEXT,
 	category TEXT,
 	PRIMARY KEY (id)
-};
+);
 
 CREATE TABLE fb_user (
 	id BIGINT NOT NULL,
