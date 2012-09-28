@@ -63,10 +63,10 @@ CREATE TABLE likedby (
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
 	fb_id INT NOT NULL,
+	created_time TIMESTAMP WITH TIME ZONE,
 	PRIMARY KEY (page_id, post_id, comment_id, fb_id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (comment_id) REFERENCES comment(id) ON UPDATE CASCADE ON DELETE RESTRICT
+	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE tag (
@@ -79,8 +79,7 @@ CREATE TABLE tag (
 	length INT,	
 	PRIMARY KEY (page_id, post_id, comment_id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (comment_id) REFERENCES comment(id) ON UPDATE CASCADE ON DELETE RESTRICT
+	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 
@@ -90,6 +89,5 @@ CREATE TABLE keyword (
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
 	PRIMARY KEY (hash_id, page_id, post_id, comment_id),
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (comment_id) REFERENCES comment(id) ON UPDATE CASCADE ON DELETE RESTRICT
+	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
