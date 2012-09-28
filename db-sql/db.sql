@@ -10,7 +10,7 @@ DROP SCHEMA fb_wallpost cascade;
 create schema fb_wallpost;
 set search_path to fb_wallpost;
 
-CREATE TABLE fb_page (
+CREATE TABLE page (
 	id BIGINT NOT NULL,
 	name TEXT,
 	category TEXT,
