@@ -10,77 +10,74 @@ create schema fb_wallpost;
 set search_path to fb_wallpost;
 
 CREATE TABLE fb_user (
-	row_id BIGINT,
 	id BIGINT NOT NULL,
 	name TEXT,
 	category VARCHAR(100),
-	PRIMARY KEY (row_id),
-	UNIQUE(id)
+	PRIMARY KEY (id)
 );
 
-CREATE TABLE message (
-	row_id BIGINT,
-	id VARCHAR(100) NOT NULL,
-	parent_message_row_id INT,
-	fb_wall_row_id BIGINT,
+CREATE TABLE post (
+	id BIGINT,
+	page_id BIGINT,
 	name TEXT,
 	text TEXT,
-	type VARCHAR(300),
-	description TEXT,
-	caption TEXT,
+	type VARCHAR(20),
+	story TEXT,
+	link TEXT,
+	link_description TEXT,
+	link_caption TEXT,
 	created_time TIMESTAMP WITH TIME ZONE,
 	updated_time TIMESTAMP WITH TIME ZONE,
-	from_user_row_id INT NOT NULL,
+	fb_id BIGINT NOT NULL,
 	can_remove BOOL,
 	shares_count INT,
 	likes_count INT,
 	comments_count INT,
-	PRIMARY KEY (row_id),
-	FOREIGN KEY (parent_message_row_id) REFERENCES message(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (from_user_row_id) REFERENCES fb_user(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (fb_wall_row_id) REFERENCES fb_user(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	UNIQUE(id)
+	PRIMARY KEY (page_id, id),
+	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE message_to (
-	row_id BIGINT,
-	message_row_id INT NOT NULL,
-	to_user_row_id INT NOT NULL,
-	PRIMARY KEY (row_id),
-	FOREIGN KEY (to_user_row_id) REFERENCES fb_user(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (message_row_id) REFERENCES message(row_id) ON UPDATE CASCADE ON DELETE RESTRICT
+CREATE TABLE comment (
+	id BIGINT,
+	post_id BIGINT,
+	page_id BIGINT,
+	fb_id BIGINT,
+	message TEXT,
+	created_time TIMESTAMP WITH TIME ZONE,
+	PRIMARY KEY (page_id, post_id, id),
+	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (post_id) REFERENCES post(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE likedby (
-	row_id BIGINT,
-	what_message_row_id INT NOT NULL,
-	who_user_row_id INT NOT NULL,
-	PRIMARY KEY (row_id),
-	FOREIGN KEY (who_user_row_id) REFERENCES fb_user(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (what_message_row_id) REFERENCES message(row_id) ON UPDATE CASCADE ON DELETE RESTRICT
+	page_id BIGINT NOT NULL,
+	post_id BIGINT NOT NULL,
+	comment_id BIGINT,
+	fb_id INT NOT NULL,
+	PRIMARY KEY (page_id, post_id, comment_id, fb_id),
+	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (post_id) REFERENCES post(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (comment_id) REFERENCES comment(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE tag (
-	row_id BIGINT,
-	message_row_id INT NOT NULL,
-	user_row_id INT NOT NULL,
+	page_id BIGINT NOT NULL,
+	post_id BIGINT NOT NULL,
+	comment_id BIGINT,
+	fb_id BIGINT NOT NULL,
 	type VARCHAR(30),
 	starting_offset INT,
 	length INT,	
-	PRIMARY KEY (row_id),
-	FOREIGN KEY (user_row_id) REFERENCES fb_user(row_id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (message_row_id) REFERENCES message(row_id) ON UPDATE CASCADE ON DELETE RESTRICT
+	PRIMARY KEY (page_id, post_id, comment_id),
+	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (post_id) REFERENCES post(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+	FOREIGN KEY (comment_id) REFERENCES comment(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE link (
-	row_id BIGINT,
-	message_row_id INT NOT NULL,
-	address TEXT,
-	type varchar(10),
-	name TEXT,
-	text TEXT,
-	FOREIGN KEY (message_row_id) REFERENCES message(row_id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
 
 CREATE TABLE keyword (
 	row_id BIGINT,
