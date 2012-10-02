@@ -1,10 +1,10 @@
-DROP TABLE tag;
-DROP TABLE post;
-DROP TABLE comment;
-DROP TABLE likedby;
-DROP TABLE message;
-DROP TABLE fb_user;
-DROP TABLE page;
+DROP TABLE tag CASCADE;
+DROP TABLE post CASCADE;
+DROP TABLE comment CASCADE;
+DROP TABLE likedby CASCADE;
+DROP TABLE message CASCADE;
+DROP TABLE fb_user CASCADE;
+DROP TABLE page CASCADE;
 
 CREATE TABLE page (
 	id BIGINT NOT NULL,
@@ -25,8 +25,8 @@ CREATE TABLE post (
 	page_id BIGINT,
 	fb_id BIGINT NOT NULL,
 	message TEXT,
-	type VARCHAR(20),
-	picture VARCHAR(60),
+	type VARCHAR(100),
+	picture VARCHAR(100),
 	story TEXT,
 	link TEXT,
 	link_name TEXT,
@@ -50,6 +50,7 @@ CREATE TABLE comment (
 	page_id BIGINT,
 	fb_id BIGINT,
 	message TEXT,
+	can_remove BOOL,
 	created_time TIMESTAMP WITH TIME ZONE,
 	PRIMARY KEY (page_id, post_id, id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -60,7 +61,7 @@ CREATE TABLE likedby (
 	page_id BIGINT NOT NULL,
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
-	fb_id INT NOT NULL,
+	fb_id BIGINT NOT NULL,
 	created_time TIMESTAMP WITH TIME ZONE,
 	PRIMARY KEY (page_id, post_id, comment_id, fb_id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
