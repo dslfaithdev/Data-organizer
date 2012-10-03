@@ -83,7 +83,7 @@ CREATE TABLE tag (
 
 
 CREATE TABLE keyword (
-	hash_id BIGINT,
+	hash_id BYTEA,
 	page_id BIGINT NOT NULL,
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
