@@ -83,10 +83,12 @@ CREATE TABLE tag (
 
 
 CREATE TABLE keyword (
-	hash_id BYTEA,
+	hash_id VARCHAR(32),
 	page_id BIGINT NOT NULL,
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
 	PRIMARY KEY (hash_id, page_id, post_id, comment_id),
 	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+CREATE INDEX ON keyword (hash_id);
