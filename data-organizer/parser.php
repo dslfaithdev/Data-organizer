@@ -11,46 +11,35 @@ $dbconn = pg_connect("dbname=rezaur_search_engine_db user=socinfo password=dslbi
 $query = parseJsonString($s);
 $sql ="";
 
-$rows = $query['fb_user'];
+foreach ($query as &$table)
+  foreach ($table as &$line)
+    $line = "(".implode(",", $line).")";
+
+//$rows = $query['fb_user'];
 $sql .= "INSERT INTO fb_user VALUES ";
-foreach ($rows as &$line) {
-  $line = "(".implode(",", $line).")";
-}
-$sql .= implode(",",$rows);
+$sql .= implode(",",array_unique($query['fb_user']));
 $sql .= " EXCEPT SELECT id, name, category FROM fb_user;\n";
 
-$rows = $query['page'];
+//$rows = $query['page'];
 $sql .= "INSERT INTO page VALUES ";
-foreach ($rows as &$line) {
-  $line = "(".implode(",", $line).")";
-}
-$sql .= implode(",",$rows);
+$sql .= implode(",",array_unique($query['page']));
 $sql .= " EXCEPT SELECT id, name, category FROM page;\n";
 
-$rows = $query['post'];
+//$rows = $query['post'];
 $sql .= "INSERT INTO post VALUES ";
-foreach ($rows as &$line) {
-  $line = "(".implode(",", $line).")";
-}
-$sql .= implode(",",$rows);
+$sql .= implode(",",array_unique($query['post']));
 $sql .= " EXCEPT SELECT id, page_id, fb_id, message, type, picture, ".
     "story, link, link_name, link_description, link_caption, icon, ".
     "created_time, updated_time, can_remove, shares_count, likes_count, comments_count FROM post;\n";
 
-$rows = $query['comment'];
+//$rows = $query['comment'];
 $sql .= "INSERT INTO comment VALUES ";
-foreach ($rows as &$line) {
-  $line = "(".implode(",", $line).")";
-}
-$sql .= implode(",",$rows);
+$sql .= implode(",",array_unique($query['comment']));
 $sql .= " EXCEPT SELECT id, post_id, page_id, fb_id, message, can_remove, created_time FROM comment;\n";
 
-$rows = $query['likedby'];
+//$rows = $query['likedby'];
 $sql .= "INSERT INTO likedby VALUES ";
-foreach ($rows as &$line) {
-  $line = "(".implode(",", $line).")";
-}
-$sql .= implode(",",$rows);
+$sql .= implode(",",array_unique($query['likedby']));
 $sql .= " EXCEPT SELECT page_id, post_id, comment_id, fb_id, created_time FROM likedby;\n";
 
 #die($sql);
@@ -127,9 +116,11 @@ function parseJsonString($string) {
     $post['picture'], $post['story'], $post['link'], $post['name'],
     $post['description'], $post['caption'], $post['icon'],
     $post['created_time'], $post['updated_time'], $post['can_remove'],
-    $post['likes'], $post['comments'], $post['actions']);
-  $missed = json_encode($post)."\n";
+    $post['shares'], $post['likes'], $post['comments'], $post['actions']);
+  $missed = json_encode($post);
+  $missed = '{"id":"'.$msg_id.'","missed":['.$missed.']},'."\n";
 #  print $missed."\n";
+  file_put_contents('missed_data.json', $missed, FILE_APPEND);
 
 
   foreach ($data as $line){
@@ -168,19 +159,16 @@ function parseJsonString($string) {
     if(isset($d['ec_likes'])) {
       if(empty($d['ec_likes']['data']))
         continue;
-      preg_match('/([0-9])+_([0-9])+_([0-9]+)\\/likes/', current($d['ec_likes']['paging']),$matches);
+      preg_match('/([0-9]+)_([0-9]+)_([0-9]+)\\/likes/', current($d['ec_likes']['paging']),$matches);
       foreach ($d['ec_likes']['data'] as $like)
         if(isset($like['id'])) {
           array_push($table["fb_user"], array(
-            $c['from']['id'], "'".pg_escape_string($c['from']['name'])."'", "NULL"));
+            $like['id'], "'".pg_escape_string($like['name'])."'", "NULL"));
           array_push($table["likedby"], array(
-            $matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'], "NULL")."', 'YYYY-MM-DD HH24:MI:SS')"));
+            $matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
   }
-
-#  foreach ($table as &$arr)
-#    $arr = array_unique($arr);
   return $table;
 }
 
