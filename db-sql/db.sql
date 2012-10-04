@@ -25,14 +25,14 @@ CREATE TABLE post (
 	page_id BIGINT,
 	fb_id BIGINT NOT NULL,
 	message TEXT,
-	type VARCHAR(100),
-	picture VARCHAR(100),
+	type VARCHAR(256),
+	picture VARCHAR(256),
 	story TEXT,
 	link TEXT,
 	link_name TEXT,
 	link_description TEXT,
 	link_caption TEXT,
-	icon VARCHAR(60),
+	icon VARCHAR(256),
 	created_time TIMESTAMP WITH TIME ZONE,
 	updated_time TIMESTAMP WITH TIME ZONE,
 	can_remove BOOL,
@@ -83,10 +83,12 @@ CREATE TABLE tag (
 
 
 CREATE TABLE keyword (
-	hash_id BYTEA,
+	hash_id VARCHAR(32),
 	page_id BIGINT NOT NULL,
 	post_id BIGINT NOT NULL,
 	comment_id BIGINT,
 	PRIMARY KEY (hash_id, page_id, post_id, comment_id),
 	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+CREATE INDEX ON keyword (hash_id);
