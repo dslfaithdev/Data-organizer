@@ -1,6 +1,6 @@
 <?
 // define('DB', 'psql')
-ini_set('memory_limit', '64M');
+ini_set('memory_limit', '256M');
 
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
@@ -16,29 +16,33 @@ function parseJsonString($string) {
   $post = json_decode(array_shift($data),true);
   if($post == "")
     throw new Exception("Empty post", E_WARNING);
-  if(isset($post['to'])) {//We have a user post.
+  if(isset($post['ep_likes']) || $post === NULL)
+    throw new Exception("Broken post", E_WARNING);
+  if( isset($post['to']) && (isset($post['to']['data'][0]) || isset($post['to']['data'][0])) ) {//We have a user post.
     array_push($table["fb_user"], array(
       $post['from']['id'],
       my_escape($post['from']['name']),
-      "NULL"));
+      my_escape(issetOr($post['from']['category']))));
+    foreach($post['to']['data'] as $user) {
     array_push($table["fb_user"], array(
-      $post['to']['data'][0]['id'],
-      my_escape($post['to']['data'][0]['name']),
-      my_escape($post['to']['data'][0]['category'])));
+      $user['id'],
+      my_escape($user['name']),
+      my_escape(isSetOr($user['category']))));
     array_push($table["page"], array(
-      $post['to']['data'][0]['id'],
-      my_escape($post['to']['data'][0]['name']),
-      my_escape($post['to']['data'][0]['category'])));
+      $user['id'],
+      my_escape($user['name']),
+      my_escape(isSetOr($user['category']))));
+
+    }
   } else {
     array_push($table["fb_user"], array(
       $post['from']['id'],
       my_escape($post['from']['name']),
-      my_escape($post['from']['category'])));
+      my_escape(($post['from']['category']))));
     array_push($table["page"], array(
       $post['from']['id'],
       my_escape($post['from']['name']),
-      my_escape($post['from']['category'])));
-
+      my_escape(($post['from']['category']))));
   }
 
   array_push($table["post"], array(
@@ -54,9 +58,11 @@ function parseJsonString($string) {
     my_escape(isSetOr($post['description'])),
     my_escape(isSetOr($post['caption'])),
     my_escape(isSetOr($post['icon'])),
-    "to_timestamp('".  pg_escape_string(isSetOr($post['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
-    "to_timestamp('".  pg_escape_string(isSetOr($post['updated_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
-    pg_escape_string(isSetOr($post['can_remove'], "false")),
+    my_escape(isSetOr($post['created_time'])),
+    my_escape(isSetOr($post['created_time'])),
+    //"to_timestamp('".  pg_escape_string(isSetOr($post['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
+    //"to_timestamp('".  pg_escape_string(isSetOr($post['updated_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
+    my_escape(isSetOr($post['can_remove'], "false")),
     0,0,0 ));
 
   //Remove the used info.
@@ -66,11 +72,12 @@ function parseJsonString($string) {
     $post['description'], $post['caption'], $post['icon'],
     $post['created_time'], $post['updated_time'], $post['can_remove'],
     $post['shares'], $post['likes'], $post['comments'], $post['actions']);
-  $missed = json_encode($post);
-  $missed = '{"id":"'.$msg_id.'","missed":['.$missed.']},'."\n";
-#  print $missed."\n";
-  file_put_contents('missed_data.json', $missed, FILE_APPEND);
-
+  if(!empty($post)) {
+    $missed = json_encode($post);
+    $missed = '"'.$msg_id.'":'.$missed.','.PHP_EOL;
+    #  print $missed."\n";
+    file_put_contents('missed_data-NEW.json', $missed, FILE_APPEND);
+  }
 
   foreach ($data as $line){
     $d = json_decode($line,true);
@@ -82,10 +89,11 @@ function parseJsonString($string) {
         if(isset($like['id'])) {
           array_push($table["fb_user"], array(
             $like['id'],
-            my_escape($like['name']),
+            my_escape(isSetOr($like['name'],NULL)),
             "NULL"));
           array_push($table["likedby"], array(
-            $matches[1], $matches[2], 0, $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
+            $matches[1], $matches[2], 0, $like['id'], my_escape(isSetOr($like['created_time']))));//."', 'YYYY-MM-DD HH24:MI:SS')"));
+            //$matches[1], $matches[2], 0, $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
     if(isset($d['ec_comments'])) {
@@ -95,13 +103,14 @@ function parseJsonString($string) {
       foreach ($d['ec_comments']['data'] as $c) {
         if(isset($c['id'])) {
           array_push($table["fb_user"], array(
-            $c['from']['id'], my_escape($c['from']['name']), "NULL"));
+            $c['from']['id'], my_escape(isSetOr($c['from']['name'])), "NULL"));
           $ids=explode('_',$c['id']);
           array_push($table["comment"], array(
             array_pop($ids), array_pop($ids), array_pop($ids), $c['from']['id'],
             my_escape($c['message']),
-            ($c['can_remove'] ? "true" : "false"),
-            "to_timestamp('".  pg_escape_string(isSetOr($c['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')"));
+            (isset($c['can_remove']) ? "true" : "false"),
+            my_escape(isSetOr($c['created_time']))));
+            //"to_timestamp('".  pg_escape_string(isSetOr($c['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')"));
         }
       }
     }
@@ -114,7 +123,8 @@ function parseJsonString($string) {
           array_push($table["fb_user"], array(
             $like['id'], my_escape($like['name']), "NULL"));
           array_push($table["likedby"], array(
-            $matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
+            $matches[1], $matches[2], $matches[3], $like['id'], my_escape(isSetOr($like['created_time']))));//."', 'YYYY-MM-DD HH24:MI:SS')"));
+            //$matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
   }
@@ -196,7 +206,10 @@ function exportToCsv($filePrefix, $array) {
     if($f === FALSE)
       return "error opening ".$filePrefix.".".$key.".csv".PHP_EOL;
 
-    foreach(array_unique($value, SORT_REGULAR) as $fields) {
+    //Test of new array_unique
+  # $value = array_map('unserialize', array_unique(array_map('serialize', $value)));
+
+    foreach($value as $fields) {
       fputcsv($f, $fields, ',','"');
     }
     fclose($f);
