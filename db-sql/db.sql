@@ -39,6 +39,7 @@ CREATE TABLE post (
 	shares_count INT,
 	likes_count INT,
 	comments_count INT,
+	extracted boolean default false,
 	PRIMARY KEY (page_id, id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -51,6 +52,7 @@ CREATE TABLE comment (
 	fb_id BIGINT,
 	message TEXT,
 	can_remove BOOL,
+	extracted boolean default false,
 	created_time TIMESTAMP WITH TIME ZONE,
 	PRIMARY KEY (page_id, post_id, id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
