@@ -94,3 +94,30 @@ CREATE TABLE keyword (
 );
 
 CREATE INDEX ON keyword (hash_id);
+
+/* Update the comment count on post */
+UPDATE post SET comments_count = (SELECT count(*) FROM comment WHERE post_id=post.id);
+/* Update the likes count on post */
+UPDATE post SET likes_count = (SELECT count(*) FROM likedby WHERE post_id=post.id);
+
+/* Insert ignore */
+CREATE OR REPLACE RULE "insert_ignore" AS ON INSERT TO 
+	fb_user WHERE EXISTS(SELECT true FROM fb_user WHERE id = NEW.id) DO INSTEAD NOTHING;
+
+CREATE OR REPLACE RULE "insert_ignore" AS ON INSERT TO 
+	likedby WHERE (new.page_id, new.post_id, new.comment_id, new.fb_id) IN 
+	( SELECT page_id, post_id, comment_id, fb_id FROM likedby WHERE 
+	page_id=new.page_id AND post_id=new.post_id AND comment_id=new.comment_id AND fb_id=new.fb_id) 
+	DO INSTEAD NOTHING;
+
+/* insert on duplicate update */
+CREATE OR REPLACE RULE "insert_on_duplicate_update" AS ON INSERT TO 
+	likedby WHERE (new.page_id, new.post_id, new.comment_id, new.fb_id) IN 
+	( SELECT page_id, post_id, comment_id, fb_id FROM likedby WHERE 
+	page_id=new.page_id AND post_id=new.post_id AND comment_id=new.comment_id AND fb_id=new.fb_id) 
+	DO INSTEAD UPDATE likedby SET created_time=new.created_time
+	WHERE page_id=new.page_id AND post_id=new.post_id AND comment_id=new.comment_id AND fb_id=new.fb_id;
+
+CREATE OR REPLACE RULE "insert_on_duplicate_update" AS ON INSERT TO 
+	fb_user WHERE EXISTS(SELECT true FROM fb_user WHERE id = NEW.id) DO INSTEAD 
+	UPDATE fb_uder SET name = new.name, category = new.category WHERE fb_user = new.fb_user;
