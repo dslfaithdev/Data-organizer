@@ -40,6 +40,8 @@ CREATE TABLE post (
 	likes_count INT,
 	comments_count INT,
 	extracted boolean default false,
+	entr_pg FLOAT DEFAULT -1;
+	entr_pg FLOAT DEFAULT -1;
 	PRIMARY KEY (page_id, id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -94,6 +96,17 @@ CREATE TABLE keyword (
 );
 
 CREATE INDEX ON keyword (hash_id);
+
+/* Views */
+CREATE VIEW status AS SELECT 
+	(SELECT to_char(count(*),'999 999 999 999') FROM likedby) AS likes,
+	(SELECT to_char(count(*),'999 999 999 999') FROM fb_user) AS users,
+	(SELECT to_char(count(*),'999 999 999 999') FROM post) AS posts,
+	(SELECT to_char(count(*),'999 999 999 999') FROM comment) AS comments;
+
+/* Useful */
+/* \dt+ -> gives size of tables */
+/* \d+ <table> -> gives table info */
 
 /* Update the comment count on post */
 UPDATE post SET comments_count = (SELECT count(*) FROM comment WHERE post_id=post.id);
