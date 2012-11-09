@@ -41,7 +41,7 @@ CREATE TABLE post (
 	comments_count INT,
 	extracted boolean default false,
 	entr_pg FLOAT DEFAULT -1;
-	entr_pg FLOAT DEFAULT -1;
+	entr_ug FLOAT DEFAULT -1;
 	PRIMARY KEY (page_id, id),
 	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
