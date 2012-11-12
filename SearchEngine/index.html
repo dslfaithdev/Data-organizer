@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <title>SINCERE: Social Interactive Networking and Conversation Entropy Ranking Engine</title>
+
+    <link type="text/css" href="css/main_style.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="page">
+      <div id="header">
+        <img src="image/dsl_logo2.png" style="height:100px;" />
+        <div id="header_right">
+          <div id="header_title">SINCERE</div>
+          <div id="header_descrption">Social Interactive Networking and Conversation Entropy Ranking Engine</div>
+        </div>
+      </div>
+      <div id="content_main">
+        <div style="margin-top:10px;">
+          <span style="display:inline-block">
+            <input type="text" id="search_box" name="terms" size="50" />
+            <input id="search_btn" type="button" value="Search" />
+            <span id="tip_icon" title="Tip: How to use"><img style="width:25px;height:25px;" src="image/Tango-icon-tip.png" /></span>
+          </span>
+        </div>
+        <div style="margin-top:10px;">
+          <span style="display:inline-block; padding-right:15px;">
+            Include
+            <select id="search_type" name="boolean">
+              <option selected="selected">ANY</option>
+              <option>ALL</option>
+            </select>
+            <span style="margin-left:5px;">words</span>
+          </span>
+
+          <span style="display:inline-block; padding-left:15px; padding-right:15px; border-left: 1px #C2C2C2 solid;">
+            Rank by
+            <select id="ranking" name="case">
+              <option>Text ranking</option>
+              <option>Entropy</option>
+              <option>Frequency</option>
+              <option disabled="disabled">Shares</option>
+              <option>Likes</option>
+              <option>Comments</option>
+            </select>
+          </span>
+
+          <span style="display:inline-block; padding-left:15px; padding-right:15px; border-left: 1px #C2C2C2 solid;">
+            Return top
+            <input id="total_results" name="total_results" type="text" value="25" size="3" disabled="disabled"/> results
+          </span>
+        </div>
+        <div id="tip_content" style="display: none;">Enter a keyword, several keywords, or a keyword phrase in quotes and select search type.</div>
+
+        <div id="results">
+        </div>
+      </div>
+    </div>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+    <script type="text/javascript" src="js/json2.min.js"></script>
+    <script type="text/javascript">
+      var messageMap = new Array();
+      function fadeTipbox(){ $('#tip_content').fadeOut(2000); }
+
+      function doSearch(keyword, page){
+        var orderBy = $("#ranking").val();
+        var url = "//" + location.hostname + "/fer/q.php?q=" + keyword + "&orderBy="+orderBy;
+        messageMap.length = 0;
+        //Disable the search button, show loader.
+        $("#search_btn").attr("disabled", "disabled");
+        $("#search_box").css("background", "url(image/ajax-loader.gif) no-repeat right center");
+        $.get(url, function(data) {
+          $('#results').empty();
+          var results = data['results'];
+    //      objs = data;
+
+          if($('#result_main').css('display') == 'none')
+            $('#result_main').css('display', 'block');
+
+          if(results.length==0){
+            $('#results').html('<span style="font-size:28px">No results</span>');
+            return;
+          }
+
+          for(var i=0; i<results.length; i++){
+            messageMap[results[i]['post_id']] = results[i]['message'];
+            var obj = $('<div class="result_wrapper" postid="'+results[i]['post_id']+'">' +
+              '<div class="result_row1">' +
+              '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'">'+results[i]['group']+'</a></span>' +
+              '<span class="ctime"> '+results[i]['createdtime']+'</span>' +
+              '</span>' +
+              '</div>' +
+              '<div class="result_row2">' +
+              '<span class="like">'+results[i]['likes']+'</span> Likes · ' + 
+              '<span class="share">'+results[i]['shares']+'</span> Shares · ' +
+              '<span class="comment">'+results[i]['comments']+'</span> Comments · ' +
+              '<span class="freq">Frequency:'+results[i]['freq']+'</span> · ' +
+              '<span class="entropy">Entropy:'+results[i]['entropy']+
+              '</div>' +
+              '<div class="excerpt">' + results[i]['excerpt']+'</div>'+
+              '<div class="result_content" flag="0">' +
+              'This is the main content' +
+              '</div>' +
+              '</div>'
+            );
+            $('#results').append(obj);
+          }
+
+
+        },"json"
+        ).complete( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");});
+      }
+
+      $(function(){
+        $('#tip_content').hide();
+        $('#tip_icon').click(function(){
+          $('#tip_content').fadeIn(1000, function(){
+            setTimeout(fadeTipbox, 5000);
+          });
+        });
+        $('#search_btn').click(function(){
+          doSearch($('#search_box').val(), 1);
+        });
+        $('#search_box').keydown(function(event){
+          if (!event)
+            event = window.event;
+          var keyCode = (event.keyCode);
+          if (keyCode == 13){
+            doSearch($('#search_box').val(), 1);
+          }
+        });
+          $('#results').click(function(e){
+            var target;
+            if (!e) e = window.event;
+            if (e.target) target = e.target;
+            else if(e.srcElement) target = e.srcElement;
+            if (target.nodeType == 3)
+              target = target.parentNode;
+
+            if($(target).hasClass('expand_icon')){
+              var parent = $(target).parent().parent();
+              var pid = parent.attr('postid');
+              var message = messageMap[pid];
+              parent.find('.excerpt').toggle();
+              if(parent.find('.result_content').attr('flag') == 0){
+                var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
+                element.attr('flag', 1);
+                element.css('display','block').html(message);
+                $(target).css('background-position-x', '-9px');
+              }else{
+                var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
+                element.attr('flag', 0);
+                element.css('display','').html();
+                $(target).css('background-position-x', '');
+
+              }
+            }
+          });
+      });
+    </script>	
+  </body>
+</html>
