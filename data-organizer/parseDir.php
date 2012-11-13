@@ -11,10 +11,11 @@ if(!is_dir($tmpDir))
 foreach(glob($argv[1].'/*.tar.gz') as $tar){
   print $tar.PHP_EOL;
   exec("tar -xzvf $tar -C $tmpDir 2>&1 | awk '{print $2;}' | sort -n", $jsons);
+  $csv = "./out/".basename(substr($tar, 0, -7));
   foreach($jsons as $json){
     if( substr($json, -strlen('.json')) != '.json') continue; //does not end with '.json'
     try {
-      exportToCsv(substr($tar, 0, -7), parseJsonString(file_get_contents($tmpDir."/".$json)));
+      exportToCsv($csv, parseJsonString(file_get_contents($tmpDir."/".$json)));
       unlink($tmpDir."/".$json);
     } catch(Exception $e) {
       fwrite(STDERR, $json . " - " . $e->getMessage() . " ". $e->getFile() . ":". $e->getLine(). PHP_EOL);
@@ -27,6 +28,7 @@ foreach(glob($argv[1].'/*.tar.gz') as $tar){
     exec('rm -r '.$tmpDir."/".$jsons[0].' 2>&1 > /dev/null');
   } catch(Exception $e) {}
   unset($jsons);
+  exec('mv -v '.$csv.'* '.$argv[1]);
 }
-    pg_close($dbconn);
+#    pg_close($dbconn);
 ?>
