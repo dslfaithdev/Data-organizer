@@ -10,10 +10,6 @@ $CONF = array();
 $CONF['sphinx_host'] = 'localhost';
 $CONF['sphinx_port'] = 9312; //this demo uses the SphinxAPI interface
 
-$CONF['psql_host'] = "localhost";
-$CONF['psql_username'] = "sincere";
-$CONF['psql_password'] = "1234";
-$CONF['psql_database'] = "sincere";
 $CONF['psql_conncections_string'] = "user=sincere dbname=sincere";
 
 $CONF['sphinx_index'] = "sincere_post"; // can also be a list of indexes, "main, delta"
@@ -235,7 +231,7 @@ if (!empty($q)) {
 
         //Run the Mysql Query
         //left outer join page ON (post.page_id=page.id)
-        $sql = str_replace('$ids',implode(',',$ids),'SELECT message,post.id as  post_id, created_time as createdtime,
+        $sql = str_replace('$ids',implode(',',$ids),'SELECT page.id AS page_id, message,post.id as  post_id, created_time as createdtime,
           likes_count as likes, shares_count as shares, comments_count as comments, entr_ug as freq,
           entr_pg as entropy, page.name AS group FROM post LEFT OUTER JOIN page ON (post.page_id=page.id) WHERE post.id in ($ids) ');
         $result = pg_query($sql) or die($CONF['debug']?("ERROR: psql query failed: ".mysql_error()):"ERROR: Please try later");
@@ -244,7 +240,7 @@ if (!empty($q)) {
           $rows = array();
 
           while ($row = pg_fetch_array($result, NULL, PGSQL_ASSOC)) {
-            $row['link'] = $row['group'].'_'.$row['post_id'];
+            $row['link'] = $row['page_id'].'_'.$row['post_id'];
             $rows[$row['post_id']] = $row;
           }
           //Build Excerpts.
@@ -256,6 +252,7 @@ if (!empty($q)) {
 
           foreach ($ids as $c => $id) {
             $rows[$id]['excerpt'] = $reply[$c];
+            $rows[$id]['message'] = nl2br(htmlentities($rows[$id]['message']));
             $json['results'][] = $rows[$id];
           }
           print json_encode($json);

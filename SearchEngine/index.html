@@ -61,60 +61,79 @@
 
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script type="text/javascript" src="js/json2.min.js"></script>
+    <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
     <script type="text/javascript">
       var messageMap = new Array();
       function fadeTipbox(){ $('#tip_content').fadeOut(2000); }
 
       function doSearch(keyword, page){
+        if(keyword== "")
+          return;
         var orderBy = $("#ranking").val();
-        var url = "//" + location.hostname + "/fer/q.php?q=" + keyword + "&orderBy="+orderBy;
+        var url = "//" + location.hostname + "/q.php?q=" + keyword + "&orderBy="+orderBy;
+        window.location.hash = "q=" + keyword + "&orderBy="+orderBy;
         messageMap.length = 0;
         //Disable the search button, show loader.
         $("#search_btn").attr("disabled", "disabled");
         $("#search_box").css("background", "url(image/ajax-loader.gif) no-repeat right center");
         $.get(url, function(data) {
-          $('#results').empty();
-          var results = data['results'];
-    //      objs = data;
-
-          if($('#result_main').css('display') == 'none')
-            $('#result_main').css('display', 'block');
-
-          if(results.length==0){
-            $('#results').html('<span style="font-size:28px">No results</span>');
-            return;
-          }
-
-          for(var i=0; i<results.length; i++){
-            messageMap[results[i]['post_id']] = results[i]['message'];
-            var obj = $('<div class="result_wrapper" postid="'+results[i]['post_id']+'">' +
-              '<div class="result_row1">' +
-              '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'">'+results[i]['group']+'</a></span>' +
-              '<span class="ctime"> '+results[i]['createdtime']+'</span>' +
-              '</span>' +
-              '</div>' +
-              '<div class="result_row2">' +
-              '<span class="like">'+results[i]['likes']+'</span> Likes · ' + 
-              '<span class="share">'+results[i]['shares']+'</span> Shares · ' +
-              '<span class="comment">'+results[i]['comments']+'</span> Comments · ' +
-              '<span class="freq">Frequency:'+results[i]['freq']+'</span> · ' +
-              '<span class="entropy">Entropy:'+results[i]['entropy']+
-              '</div>' +
-              '<div class="excerpt">' + results[i]['excerpt']+'</div>'+
-              '<div class="result_content" flag="0">' +
-              'This is the main content' +
-              '</div>' +
-              '</div>'
-            );
-            $('#results').append(obj);
-          }
-
-
+          searchResult(data, false);
         },"json"
-        ).complete( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");});
+        ).complete( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");}); 
+      }
+
+      function searchResult(data, append) {
+        if(!append)
+          $('#results').empty();
+        var results = data['results'];
+        //      objs = data;
+
+        if($('#result_main').css('display') == 'none')
+          $('#result_main').css('display', 'block');
+
+        if(results.length==0){
+          $('#results').html('<span style="font-size:28px">No results</span>');
+          return;
+        }
+
+        for(var i=0; i<results.length; i++){
+          messageMap[results[i]['post_id']] = results[i]['message'];
+          var obj = $('<div class="result_wrapper" postid="'+results[i]['post_id']+'">' +
+            '<div class="result_row1">' +
+            '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'">'+results[i]['group']+'</a></span>' +
+            '<span class="ctime"> '+results[i]['createdtime']+'</span>' +
+            '</span>' +
+            '</div>' +
+            '<div class="result_row2">' +
+            '<span class="like">'+results[i]['likes']+'</span> Likes · ' + 
+            '<span class="share">'+results[i]['shares']+'</span> Shares · ' +
+            '<span class="comment">'+results[i]['comments']+'</span> Comments · ' +
+            '<span class="freq">Frequency:'+results[i]['freq']+'</span> · ' +
+            '<span class="entropy">Entropy:'+results[i]['entropy']+
+            '</div>' +
+            '<div class="excerpt">' + results[i]['excerpt']+'</div>'+
+            '<div class="result_content" flag="0">' +
+            'This is the main content' +
+            '</div>' +
+            '</div>'
+          );
+          $('#results').append(obj);
+
+        }
       }
 
       $(function(){
+
+        /* Parse hash */
+        var h = $.parseQuery(window.location.hash.substring(1));
+        if(h.orderBy !== undefined) {
+          $('#ranking').val(h.orderBy);
+        }
+        if(h.q !== undefined) {
+          $('#search_box').val(h.q);
+          doSearch(h.q, 1);
+        }
+
         $('#tip_content').hide();
         $('#tip_icon').click(function(){
           $('#tip_content').fadeIn(1000, function(){
@@ -131,7 +150,10 @@
           if (keyCode == 13){
             doSearch($('#search_box').val(), 1);
           }
-        });
+      });
+      $('#ranking').change(function () {
+        doSearch($('#search_box').val(), 1);});
+        
           $('#results').click(function(e){
             var target;
             if (!e) e = window.event;
@@ -148,7 +170,7 @@
               if(parent.find('.result_content').attr('flag') == 0){
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
                 element.attr('flag', 1);
-                element.css('display','block').html(message);
+                element.css('display','block').html(message).doLinks();
                 $(target).css('background-position-x', '-9px');
               }else{
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
@@ -160,6 +182,37 @@
             }
           });
       });
+
+      /* doLinks script */ 
+
+function linkify(inputText, options) {
+    
+  this.options = {linkClass: 'url', targetBlank: true};
+
+  this.options = $.extend(this.options, options);
+  
+  inputText = inputText.replace(/\u200B/g, "");
+
+  //URLs starting with http://, https://, or ftp://
+  var replacePattern1 = /(src="|href="|">|\s>)?(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;Ã¯]*[-A-Z0-9+&@#\/%=~_|Ã¯]/gim;
+  var replacedText = inputText.replace(replacePattern1, function($0,$1){ return $1?$0:'<a class="'+ this.options.linkClass + '" href="' + $0 + '"' + (this.options.targetBlank?'target="_blank"':'') + '>'+ $0+ '</a>';});
+
+  //URLS starting with www and not the above
+  var replacePattern2 = /(src="|href="|">|\s>|https?:\/\/|ftp:\/\/)?www\.[-A-Z0-9+&@#\/%?=~_|!:,.;Ã¯]*[-A-Z0-9+&@#\/%=~_|Ã¯]/gim;
+  var replacedText = replacedText.replace(replacePattern2, function($0,$1){ return $1?$0:'<a class="'+ this.options.linkClass + '" href="http://' + $0 + '"' + (this.options.targetBlank?'target="_blank"':'') + '>'+ $0+ '</a>';});
+
+  //Change email addresses to mailto:: links
+  var replacePattern3 = /([\.\w]+@[a-zA-Z_]+?\.[a-zA-Z]{2,6})/gim;
+  var replacedText = replacedText.replace(replacePattern3, '<a class="' + this.options.linkClass + '" href="mailto:$1">$1</a>');
+
+  return replacedText;
+}
+
+$.fn.doLinks = function(){
+  this.each(function(){
+    $(this).html(linkify($(this).html()));
+  });
+}
     </script>	
   </body>
 </html>
