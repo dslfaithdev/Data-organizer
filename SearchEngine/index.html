@@ -97,10 +97,13 @@
         }
 
         for(var i=0; i<results.length; i++){
-          messageMap[results[i]['post_id']] = results[i]['message'];
+          if(results[i]['picture'] != null) {
+            messageMap[results[i]['post_id']] = '<img src="'+results[i]['picture']+'"/>  \n'+linkify(results[i]['message']);
+          } else
+          messageMap[results[i]['post_id']] = linkify(results[i]['message']);
           var obj = $('<div class="result_wrapper" postid="'+results[i]['post_id']+'">' +
             '<div class="result_row1">' +
-            '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'">'+results[i]['group']+'</a></span>' +
+            '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'" target="_blank">'+results[i]['group']+'</a></span>' +
             '<span class="ctime"> '+results[i]['createdtime']+'</span>' +
             '</span>' +
             '</div>' +
@@ -170,7 +173,7 @@
               if(parent.find('.result_content').attr('flag') == 0){
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
                 element.attr('flag', 1);
-                element.css('display','block').html(message).doLinks();
+                element.css('display','block').html(message);
                 $(target).css('background-position-x', '-9px');
               }else{
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');

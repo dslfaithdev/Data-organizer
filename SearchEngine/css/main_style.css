@@ -113,11 +113,13 @@ body{
 #results{
 	margin-top: 20px;
 	width: 100%;
+  font-size: 12px;
 	/* display: none; */
 }
 .result_wrapper{
 	padding: 10px 0px;
 	margin-top:10px;
+  clear: both;
 }
 .result_main{
 	height: 30px;
@@ -183,4 +185,9 @@ body{
 	padding-left:20px;
 	font-size: 14px;
 	display: none;
+}
+.result_content img{
+  vertical-align: top;
+  float: left;
+  margin-right: 20px;
 }
