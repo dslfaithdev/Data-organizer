@@ -39,7 +39,6 @@ CREATE TABLE post (
 	shares_count INT,
 	likes_count INT,
 	comments_count INT,
-	extracted boolean default false,
 	entr_pg FLOAT DEFAULT -1;
 	entr_ug FLOAT DEFAULT -1;
 	object_id BIGINT,
@@ -48,10 +47,6 @@ CREATE TABLE post (
 	is_hidden BOOL,
 	application_id BIGINT,
 	place_id BIGINT,
-	width INT,
-	height INT,
-	expanded_width INT,
-	expanded_height INT,
 	PRIMARY KEY (page_id, id),
 	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
