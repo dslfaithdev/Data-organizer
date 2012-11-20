@@ -122,30 +122,6 @@ CREATE TABLE likedby (
 	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-CREATE TABLE tag (
-	page_id BIGINT NOT NULL,
-	post_id BIGINT NOT NULL,
-	comment_id BIGINT,
-	fb_id BIGINT NOT NULL,
-	type VARCHAR(30),
-	starting_offset INT,
-	length INT,	
-	PRIMARY KEY (page_id, post_id, comment_id),
-	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
-
-CREATE TABLE keyword (
-	hash_id VARCHAR(32),
-	page_id BIGINT NOT NULL,
-	post_id BIGINT NOT NULL,
-	comment_id BIGINT,
-	PRIMARY KEY (hash_id, page_id, post_id, comment_id),
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
-CREATE INDEX ON keyword (hash_id);
 
 /* Views */
 CREATE VIEW status AS SELECT 
