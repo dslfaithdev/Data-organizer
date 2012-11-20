@@ -23,7 +23,7 @@ CREATE TABLE fb_user (
 CREATE TABLE post (
 	id BIGINT,
 	page_id BIGINT,
-	fb_id BIGINT NOT NULL,
+	from_id BIGINT NOT NULL,
 	message TEXT,
 	type VARCHAR(256),
 	picture VARCHAR(256),
@@ -42,9 +42,59 @@ CREATE TABLE post (
 	extracted boolean default false,
 	entr_pg FLOAT DEFAULT -1;
 	entr_ug FLOAT DEFAULT -1;
+	object_id BIGINT,
+	status_type VARCHAR(256),
+	source VARCHAR(256),
+	is_hidden BOOL,
+	application_id BIGINT,
+	place_id BIGINT,
+	width INT,
+	height INT,
+	expanded_width INT,
+	expanded_height INT,
 	PRIMARY KEY (page_id, id),
-	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
 	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE application (
+	id BIGINT,
+	name VARCHAR(256),
+	namespace VARCHAR(256)
+);
+
+CREATE TABLE story_tags (
+	id BIGINT,
+	page_id BIGINT,
+	post_id BIGINT,
+	offset INT,
+	length INT,
+	type VARCHAR(256),
+	name VARCHAR(256)
+);
+
+
+CREATE TABLE message_tags (
+	id BIGINT,
+	page_id BIGINT,
+	post_id BIGINT,
+	offset INT,
+	length INT,
+	type VARCHAR(256),
+	name VARCHAR(256)
+);
+
+CREATE TABLE place (
+	id BIGINT,
+	name VARCHAR(256),
+	loc_latitude FLOAT,
+	loc_longitude FLOAT
+);
+
+CREATE TABLE with_tags (
+	id BIGINT,
+	page_id BIGINT,
+	post_id BIGINT,
+	fb_id BIGINT
 );
 
 CREATE TABLE comment (
