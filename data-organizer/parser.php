@@ -26,7 +26,7 @@ function parseJsonString($string, &$table = []) {
     $users=array_merge((array)$users, (array)$post['to']['data']);
   foreach($users as $user) {
     if( isset($user['category'])) {
-      $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+      $table['page'][$user['id']] = [ $user['id'], isSetOr($user['name'],'null',true), my_escape($user['category']) ];
     } else {
       $table['fb_user'][$user['id']] = [ $user['id'], my_escape($user['name']), "NULL" ];
     }
@@ -41,7 +41,7 @@ function parseJsonString($string, &$table = []) {
   // Handle application found in $post[applicatin]
   if(isset($post['application'])) {
     $table['application'][$post['application']['id']] = [
-      $post['application']['id'], my_escape(isSetOr($post['application']['name'])), my_escape(isSetOr($post['application']['namespace'])) ];
+      $post['application']['id'], isSetOr($post['application']['name'],'null',true), isSetOr($post['application']['namespace'],'null',true) ];
   }
   // Handle story_tags/message_tags
   foreach(['story_tags', 'message_tags'] as $type) {
@@ -52,7 +52,7 @@ function parseJsonString($string, &$table = []) {
         if(!isset($tag['id'])){ var_dump($tag); die(0);}
           $table[$type][] = [
           $tag['id'], $page_id, $post_id, $tag['offset'],
-          $tag['length'], isSetOr($tag['type']), $tag['name'] ];
+          $tag['length'], isSetOr($tag['type'],'null',true), my_escape($tag['name']) ];
       }
     unset($post[$type]);
   }
@@ -74,26 +74,26 @@ function parseJsonString($string, &$table = []) {
     $post_id,
     $page_id,
     $post['from']['id'],
-    my_escape(isSetOr($post['message'])),
-    my_escape(isSetOr($post['type'])),
-    my_escape(isSetOr($post['picture'])),
-    my_escape(isSetOr($post['story'])),
-    my_escape(isSetOr($post['link'])),
-    my_escape(isSetOr($post['name'])),
-    my_escape(isSetOr($post['description'])),
-    my_escape(isSetOr($post['caption'])),
-    my_escape(isSetOr($post['icon'])),
-    my_escape(isSetOr($post['created_time'])),
-    my_escape(isSetOr($post['updated_time'])),
-    my_escape(isSetOr($post['can_remove'], "false")),
+    isSetOr($post['message'],'null',true),
+    isSetOr($post['type'],'null',true),
+    isSetOr($post['picture'],'null',true),
+    isSetOr($post['story'],'null',true),
+    isSetOr($post['link'],'null',true),
+    isSetOr($post['name'],'null',true),
+    isSetOr($post['description'],'null',true),
+    isSetOr($post['caption'],'null',true),
+    isSetOr($post['icon'],'null',true),
+    isSetOr($post['created_time'],'null',true),
+    isSetOr($post['updated_time'],'null',true),
+    isSetOr($post['can_remove'], 0,'null',true),
     isSetOr($post['shares']['count']),
     isSetOr($post['likes']['count']),
     isSetOr($post['comments']['count']),
     'null', 'null', //we can't extract entropy from our crawled post
-    isSetOr($post['object_id']),
-    my_escape(isSetOr($post['status_type'])),
-    my_escape(isSetOr($post['source'])),
-    isSetOr($post['is_hidden']),
+    isSetOr($post['object_id'], 'null'),
+    isSetOr($post['status_type'],'null',true),
+    isSetOr($post['source'],'null',true),
+    isSetOr($post['is_hidden'], 0),
     isSetOr($post['application']['id']),
     isSetOr($post['place']['id'])
   );
@@ -128,10 +128,10 @@ function parseJsonString($string, &$table = []) {
           if( isset($user['category'])) {
             $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
           } else {
-            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+            $table['fb_user'][$user['id']] = [ $user['id'], isSetOr($user['name'],'null',true), "NULL" ];
           }
           $table["likedby"][] = [
-            $matches[1], $matches[2], 0, $user['id'], my_escape(isSetOr($user['created_time']))];
+            $matches[1], $matches[2], 0, $user['id'], isSetOr($user['created_time'],'null',true)];
             //$matches[1], $matches[2], 0, $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
@@ -145,14 +145,14 @@ function parseJsonString($string, &$table = []) {
           if( isset($user['category'])) {
             $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
           } else {
-            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+            $table['fb_user'][$user['id']] = [ $user['id'], isSetOr($user['name'],'null',true), "NULL" ];
           }
           $ids=explode('_',$c['id']);
           $table["comment"][] = array(
-            array_pop($ids), array_pop($ids), array_pop($ids), $user['id'],
-            my_escape(isSetOr($c['message'])),
-            (isset($c['can_remove']) ? "true" : "false"),
-            my_escape(isSetOr($c['created_time'])));
+            array_pop($ids), array_pop($ids), array_pop($ids), isSetOr($user['id']),
+            isSetOr($c['message'],'null',true),
+            (isset($c['can_remove']) ? 1 : 0),
+            isSetOr($c['created_time'],'null',true));
             //"to_timestamp('".  pg_escape_string(isSetOr($c['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')"));
         }
       }
@@ -166,10 +166,10 @@ function parseJsonString($string, &$table = []) {
           if( isset($user['category'])) {
             $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
           } else {
-            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+            $table['fb_user'][$user['id']] = [ $user['id'], isSetOr($user['name'],'null',true), "NULL" ];
           }
           $table["likedby"][] = [
-            $matches[1], $matches[2], $matches[3], $user['id'], my_escape(isSetOr($like['created_time']))];
+            $matches[1], $matches[2], $matches[3], $user['id'], isSetOr($like['created_time'],'null',true)];
             //$matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
@@ -185,7 +185,7 @@ function createInserts($filePrefix, $array, $db) {
     foreach ($value as &$line)
       $line = "(".implode(",", $line).")";
 
-    $sql = "INSERT IGNORE INTO ".$key." VALUES (".implode(',', $value).");".PHP_EOL;
+    $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', $value).";".PHP_EOL;
 
     fwrite($f, $sql);
     fclose($f);
@@ -290,8 +290,12 @@ function myputcsv($fileName, $a) {
   return 0;
 }
  */
-function isSetOr(&$var, $or=NULL){
-  return $var === NULL ? $or: $var;
+function isSetOr(&$var, $or='null', $escape=false){
+  $ret = $var === NULL ? $or: $var;
+  if ($escape && $ret != 'null') {
+    return my_escape($ret);
+  }
+  return $ret;
 }
 
 function shiftAndEscape(&$array, $key){
