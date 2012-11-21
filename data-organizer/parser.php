@@ -7,9 +7,7 @@ function exception_error_handler($errno, $errstr, $errfile, $errline ) {
 }
 set_error_handler("exception_error_handler");
 
-function parseJsonString($string) {
-  $table = array("fb_user"=> array(),"page"=>array(),
-    "post"=>array(), "comment"=> array(), "likedby"=> array());
+function parseJsonString($string, &$table = []) {
 
   $data = preg_split("/(\r\n|\n)/", $string);
   //Parse the first row as a post(message).
@@ -18,39 +16,66 @@ function parseJsonString($string) {
     throw new Exception("Empty post", E_WARNING);
   if(isset($post['ep_likes']) || $post === NULL)
     throw new Exception("Broken post", E_WARNING);
-  if( isset($post['to']) && (isset($post['to']['data'][0]) || isset($post['to']['data'][0])) ) {//We have a user post.
-    array_push($table["fb_user"], array(
-      $post['from']['id'],
-      my_escape($post['from']['name']),
-      my_escape(issetOr($post['from']['category']))));
-    foreach($post['to']['data'] as $user) {
-    array_push($table["fb_user"], array(
-      $user['id'],
-      my_escape($user['name']),
-      my_escape(isSetOr($user['category']))));
-    array_push($table["page"], array(
-      $user['id'],
-      my_escape($user['name']),
-      my_escape(isSetOr($user['category']))));
 
+  $page_id = strstr($post['id'],'_', true);
+  $post_id = substr(strstr($post['id'],'_'),1);
+
+  // Handle users found in $post[from/to]
+  $users[]=$post['from'];
+  if( isset($post['to'] ))
+    $users=array_merge((array)$users, (array)$post['to']['data']);
+  foreach($users as $user) {
+    if( isset($user['category'])) {
+      $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+    } else {
+      $table['fb_user'][$user['id']] = [ $user['id'], my_escape($user['name']), "NULL" ];
     }
-  } else {
-    array_push($table["fb_user"], array(
-      $post['from']['id'],
-      my_escape($post['from']['name']),
-      my_escape(($post['from']['category']))));
-    array_push($table["page"], array(
-      $post['from']['id'],
-      my_escape($post['from']['name']),
-      my_escape(($post['from']['category']))));
   }
 
-  array_push($table["post"], array(
-    substr(strstr($post['id'],'_'),1),
-    strstr($post['id'],'_', true),
+  // Handle place found in $post[place]
+  if(isset($post['place'])) {
+    $table['place'][$post['place']['id']] = [
+      $post['place']['id'], my_escape($post['place']['name']),
+      $post['place']['location']['latitude'], $post['place']['location']['longitude'] ];
+  }
+  // Handle application found in $post[applicatin]
+  if(isset($post['application'])) {
+    $table['application'][$post['application']['id']] = [
+      $post['application']['id'], my_escape(isSetOr($post['application']['name'])), my_escape(isSetOr($post['application']['namespace'])) ];
+  }
+  // Handle story_tags/message_tags
+  foreach(['story_tags', 'message_tags'] as $type) {
+    if(!isset($post[$type]))
+      continue;
+    foreach($post[$type] as $tags)
+      foreach($tags as $tag) {
+        if(!isset($tag['id'])){ var_dump($tag); die(0);}
+          $table[$type][] = [
+          $tag['id'], $page_id, $post_id, $tag['offset'],
+          $tag['length'], isSetOr($tag['type']), $tag['name'] ];
+      }
+    unset($post[$type]);
+  }
+  // Handle with_tags
+  if(isset($post['with_tag'])) {
+    foreach($post['with_tag'] as $with) {
+      $table['with_tag'][] = [ $page_id, $post_id, $with['id'] ];
+    }
+    unset($post['with_tag']);
+  }
+
+  // Handle the single post assuming
+  // post_id, page_id, from_id (either a fb_id or a page_id), message, type,
+  // picture, story, link, name, description, caption, icon, created_time,
+  // updated_time, can_remove, shares_count, likes_count, comments_count, entr_pg,
+  // entr_ug, object_id, status_type, source, is_hidden, application_id,
+  // place_id
+  $table["post"][] =  array(
+    $post_id,
+    $page_id,
     $post['from']['id'],
     my_escape(isSetOr($post['message'])),
-    my_escape(isSetOr($post['type'], "''")),
+    my_escape(isSetOr($post['type'])),
     my_escape(isSetOr($post['picture'])),
     my_escape(isSetOr($post['story'])),
     my_escape(isSetOr($post['link'])),
@@ -59,11 +84,19 @@ function parseJsonString($string) {
     my_escape(isSetOr($post['caption'])),
     my_escape(isSetOr($post['icon'])),
     my_escape(isSetOr($post['created_time'])),
-    my_escape(isSetOr($post['created_time'])),
-    //"to_timestamp('".  pg_escape_string(isSetOr($post['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
-    //"to_timestamp('".  pg_escape_string(isSetOr($post['updated_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')",
+    my_escape(isSetOr($post['updated_time'])),
     my_escape(isSetOr($post['can_remove'], "false")),
-    0,0,0 ));
+    isSetOr($post['shares']['count']),
+    isSetOr($post['likes']['count']),
+    isSetOr($post['comments']['count']),
+    'null', 'null', //we can't extract entropy from our crawled post
+    isSetOr($post['object_id']),
+    my_escape(isSetOr($post['status_type'])),
+    my_escape(isSetOr($post['source'])),
+    isSetOr($post['is_hidden']),
+    isSetOr($post['application']['id']),
+    isSetOr($post['place']['id'])
+  );
 
   //Remove the used info.
   $msg_id= $post['id'];
@@ -71,7 +104,12 @@ function parseJsonString($string) {
     $post['picture'], $post['story'], $post['link'], $post['name'],
     $post['description'], $post['caption'], $post['icon'],
     $post['created_time'], $post['updated_time'], $post['can_remove'],
-    $post['shares'], $post['likes'], $post['comments'], $post['actions']);
+    $post['shares'], $post['likes'], $post['comments'],
+    $post['object_id'], $post['status_type'], $post['source'],
+    $post['is_hidden'], $post['application'], $post['place']);
+
+  //We don't care about this.
+  unset($post['width'], $post['expanded_width'], $post['height'], $post['expanded_height'], $post['actions']);
   if(!empty($post)) {
     $missed = json_encode($post);
     $missed = '"'.$msg_id.'":'.$missed.','.PHP_EOL;
@@ -85,14 +123,15 @@ function parseJsonString($string) {
       if(empty($d['ep_likes']['data']))
         continue;
       preg_match('/([0-9]+)_([0-9]+)\\/likes/', current($d['ep_likes']['paging']),$matches);
-      foreach ($d['ep_likes']['data'] as $like)
-        if(isset($like['id'])) {
-          array_push($table["fb_user"], array(
-            $like['id'],
-            my_escape(isSetOr($like['name'],NULL)),
-            "NULL"));
-          array_push($table["likedby"], array(
-            $matches[1], $matches[2], 0, $like['id'], my_escape(isSetOr($like['created_time']))));//."', 'YYYY-MM-DD HH24:MI:SS')"));
+      foreach ($d['ep_likes']['data'] as $user)
+        if(isset($user['id'])) {
+          if( isset($user['category'])) {
+            $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+          } else {
+            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+          }
+          $table["likedby"][] = [
+            $matches[1], $matches[2], 0, $user['id'], my_escape(isSetOr($user['created_time']))];
             //$matches[1], $matches[2], 0, $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
@@ -102,14 +141,18 @@ function parseJsonString($string) {
       preg_match('/([0-9]+)_([0-9]+)\\/comments/', current($d['ec_comments']['paging']),$matches);
       foreach ($d['ec_comments']['data'] as $c) {
         if(isset($c['id'])) {
-          array_push($table["fb_user"], array(
-            $c['from']['id'], my_escape(isSetOr($c['from']['name'])), "NULL"));
+          $user = $c['from'];
+          if( isset($user['category'])) {
+            $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+          } else {
+            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+          }
           $ids=explode('_',$c['id']);
-          array_push($table["comment"], array(
-            array_pop($ids), array_pop($ids), array_pop($ids), $c['from']['id'],
-            my_escape($c['message']),
+          $table["comment"][] = array(
+            array_pop($ids), array_pop($ids), array_pop($ids), $user['id'],
+            my_escape(isSetOr($c['message'])),
             (isset($c['can_remove']) ? "true" : "false"),
-            my_escape(isSetOr($c['created_time']))));
+            my_escape(isSetOr($c['created_time'])));
             //"to_timestamp('".  pg_escape_string(isSetOr($c['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')"));
         }
       }
@@ -118,18 +161,35 @@ function parseJsonString($string) {
       if(empty($d['ec_likes']['data']))
         continue;
       preg_match('/([0-9]+)_([0-9]+)_([0-9]+)\\/likes/', current($d['ec_likes']['paging']),$matches);
-      foreach ($d['ec_likes']['data'] as $like)
-        if(isset($like['id'])) {
-          array_push($table["fb_user"], array(
-            $like['id'], my_escape($like['name']), "NULL"));
-          array_push($table["likedby"], array(
-            $matches[1], $matches[2], $matches[3], $like['id'], my_escape(isSetOr($like['created_time']))));//."', 'YYYY-MM-DD HH24:MI:SS')"));
+      foreach ($d['ec_likes']['data'] as $user)
+        if(isset($user['id'])) {
+          if( isset($user['category'])) {
+            $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+          } else {
+            $table['fb_user'][$user['id']] = [ $user['id'], my_escape(isSetOr($user['name'])), "NULL" ];
+          }
+          $table["likedby"][] = [
+            $matches[1], $matches[2], $matches[3], $user['id'], my_escape(isSetOr($like['created_time']))];
             //$matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
     }
   }
 
   return $table;
+}
+function createInserts($filePrefix, $array, $db) {
+  foreach($array as $key => $value){
+    $f = fopen($filePrefix.".".$key.".sql", "a");
+    if($f === FALSE)
+      return "error opening ".$filePrefix.".".$key.".sql".PHP_EOL;
+    foreach ($value as &$line)
+      $line = "(".implode(",", $line).")";
+
+    $sql = "INSERT IGNORE INTO ".$key." VALUES (".implode(',', $value).");".PHP_EOL;
+
+    fwrite($f, $sql);
+    fclose($f);
+  }
 }
 
 function insertToDB($query, $db) {
@@ -246,6 +306,10 @@ function my_escape($key) {
   if(defined('DB')) {
     if(DB == "psql")
       return "'".pg_escape_string($key)."'";
+    if(DB == "mysql") {
+      global $db;
+      return "'".$db->real_escape_string($key)."'";
+    }
   }
   return $key;
 }
