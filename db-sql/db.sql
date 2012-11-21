@@ -1,128 +1,131 @@
-DROP TABLE tag CASCADE;
-DROP TABLE post CASCADE;
-DROP TABLE comment CASCADE;
-DROP TABLE likedby CASCADE;
-DROP TABLE message CASCADE;
-DROP TABLE fb_user CASCADE;
-DROP TABLE page CASCADE;
+DROP TABLE IF EXISTS message_tags CASCADE;
+DROP TABLE IF EXISTS story_tags CASCADE;
+DROP TABLE IF EXISTS with_tag CASCADE;
+DROP TABLE IF EXISTS post CASCADE;
+DROP TABLE IF EXISTS `comment` CASCADE;
+DROP TABLE IF EXISTS likedby CASCADE;
+DROP TABLE IF EXISTS application CASCADE;
+DROP TABLE IF EXISTS fb_user CASCADE;
+DROP TABLE IF EXISTS place CASCADE;
+DROP TABLE IF EXISTS page CASCADE;
 
-CREATE TABLE page (
-	id BIGINT NOT NULL,
-	name TEXT,
-	category TEXT,
-	PRIMARY KEY (id)
-);
-
-CREATE TABLE fb_user (
-	id BIGINT NOT NULL,
-	name TEXT,
-	category VARCHAR(100),
-	PRIMARY KEY (id)
-);
-
-CREATE TABLE post (
-	id BIGINT,
-	page_id BIGINT,
-	from_id BIGINT NOT NULL,
-	message TEXT,
-	type VARCHAR(256),
-	picture VARCHAR(256),
-	story TEXT,
-	link TEXT,
-	link_name TEXT,
-	link_description TEXT,
-	link_caption TEXT,
-	icon VARCHAR(256),
-	created_time TIMESTAMP WITH TIME ZONE,
-	updated_time TIMESTAMP WITH TIME ZONE,
-	can_remove BOOL,
-	shares_count INT,
-	likes_count INT,
-	comments_count INT,
-	entr_pg FLOAT DEFAULT -1;
-	entr_ug FLOAT DEFAULT -1;
-	object_id BIGINT,
-	status_type VARCHAR(256),
-	source VARCHAR(256),
-	is_hidden BOOL,
-	application_id BIGINT,
-	place_id BIGINT,
-	PRIMARY KEY (page_id, id),
-	FOREIGN KEY (page_id) REFERENCES page(id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
-CREATE TABLE application (
-	id BIGINT,
-	name VARCHAR(256),
-	namespace VARCHAR(256)
-);
-
-CREATE TABLE story_tag (
-	id BIGINT,
-	page_id BIGINT,
-	post_id BIGINT,
-	offset INT,
-	length INT,
-	type VARCHAR(256),
-	name VARCHAR(256)
-);
+CREATE TABLE `page` (
+  `id` bigint(20) NOT NULL,
+  `name` text,
+  `category` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE message_tag (
-	id BIGINT,
-	page_id BIGINT,
-	post_id BIGINT,
-	offset INT,
-	length INT,
-	type VARCHAR(256),
-	name VARCHAR(256)
-);
-
-CREATE TABLE place (
-	id BIGINT,
-	name VARCHAR(256),
-	loc_latitude FLOAT,
-	loc_longitude FLOAT
-);
-
-CREATE TABLE with_tag (
-	page_id BIGINT,
-	post_id BIGINT,
-	fb_id BIGINT
-);
-
-CREATE TABLE comment (
-	id BIGINT,
-	post_id BIGINT,
-	page_id BIGINT,
-	fb_id BIGINT,
-	message TEXT,
-	can_remove BOOL,
-	extracted boolean default false,
-	created_time TIMESTAMP WITH TIME ZONE,
-	PRIMARY KEY (page_id, post_id, id),
-	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
-CREATE TABLE likedby (
-	page_id BIGINT NOT NULL,
-	post_id BIGINT NOT NULL,
-	comment_id BIGINT,
-	fb_id BIGINT NOT NULL,
-	created_time TIMESTAMP WITH TIME ZONE,
-	PRIMARY KEY (page_id, post_id, comment_id, fb_id),
-	FOREIGN KEY (fb_id) REFERENCES fb_user(id) ON UPDATE CASCADE ON DELETE RESTRICT,
-	FOREIGN KEY (post_id, page_id) REFERENCES post(id, page_id) ON UPDATE CASCADE ON DELETE RESTRICT
-);
+CREATE TABLE `fb_user` (
+  `id` bigint(20) NOT NULL,
+  `name` text,
+  `category` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-/* Views */
-CREATE VIEW status AS SELECT 
-	(SELECT to_char(count(*),'999 999 999 999') FROM likedby) AS likes,
-	(SELECT to_char(count(*),'999 999 999 999') FROM fb_user) AS users,
-	(SELECT to_char(count(*),'999 999 999 999') FROM post) AS posts,
-	(SELECT to_char(count(*),'999 999 999 999') FROM comment) AS comments;
+CREATE TABLE `post` (
+  `id` bigint(20) NOT NULL DEFAULT '0',
+  `page_id` bigint(20) NOT NULL DEFAULT '0',
+  `from_id` bigint(20) NOT NULL,
+  `message` text,
+  `type` varchar(256) DEFAULT NULL,
+  `picture` varchar(256) DEFAULT NULL,
+  `story` text,
+  `link` text,
+  `link_name` text,
+  `link_description` text,
+  `link_caption` text,
+  `icon` varchar(256) DEFAULT NULL,
+  `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `updated_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `can_remove` tinyint(1) DEFAULT NULL,
+  `shares_count` int(11) DEFAULT NULL,
+  `likes_count` int(11) DEFAULT NULL,
+  `comments_count` int(11) DEFAULT NULL,
+  `entr_pg` float DEFAULT NULL,
+  `entr_ug` float DEFAULT NULL,
+  `object_id` bigint(20) DEFAULT NULL,
+  `status_type` varchar(256) DEFAULT NULL,
+  `source` varchar(256) DEFAULT NULL,
+  `is_hidden` tinyint(1) DEFAULT NULL,
+  `application_id` bigint(20) DEFAULT NULL,
+  `place_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`page_id`,`id`),
+  CONSTRAINT `post_ibfk_1` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `application` (
+  `id` bigint(20) NOT NULL DEFAULT '0',
+  `name` varchar(256) DEFAULT NULL,
+  `namespace` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `story_tags` (
+  `id` bigint(20) DEFAULT NULL,
+  `page_id` bigint(20) DEFAULT NULL,
+  `post_id` bigint(20) DEFAULT NULL,
+  `offset` int(11) DEFAULT NULL,
+  `length` int(11) DEFAULT NULL,
+  `type` varchar(256) DEFAULT NULL,
+  `name` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `message_tags` (
+  `id` bigint(20) DEFAULT NULL,
+  `page_id` bigint(20) DEFAULT NULL,
+  `post_id` bigint(20) DEFAULT NULL,
+  `offset` int(11) DEFAULT NULL,
+  `length` int(11) DEFAULT NULL,
+  `type` varchar(256) DEFAULT NULL,
+  `name` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `place` (
+  `id` bigint(20) DEFAULT NULL,
+  `name` varchar(256) DEFAULT NULL,
+  `loc_latitude` float DEFAULT NULL,
+  `loc_longitude` float DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `with_tag` (
+  `page_id` bigint(20) DEFAULT NULL,
+  `post_id` bigint(20) DEFAULT NULL,
+  `fb_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`page_id`, `post_id`, `fb_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `comment` (
+  `id` bigint(20) NOT NULL DEFAULT '0',
+  `post_id` bigint(20) NOT NULL DEFAULT '0',
+  `page_id` bigint(20) NOT NULL DEFAULT '0',
+  `fb_id` bigint(20) DEFAULT NULL,
+  `message` text,
+  `can_remove` tinyint(1) DEFAULT NULL,
+  `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`page_id`,`post_id`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `likedby` (
+  `page_id` bigint(20) NOT NULL,
+  `post_id` bigint(20) NOT NULL,
+  `comment_id` bigint(20) NOT NULL DEFAULT '0',
+  `fb_id` bigint(20) NOT NULL,
+  `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`page_id`,`post_id`,`comment_id`,`fb_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /* Useful */
 /* \dt+ -> gives size of tables */
