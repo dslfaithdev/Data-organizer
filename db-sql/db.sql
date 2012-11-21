@@ -57,7 +57,7 @@ CREATE TABLE application (
 	namespace VARCHAR(256)
 );
 
-CREATE TABLE story_tags (
+CREATE TABLE story_tag (
 	id BIGINT,
 	page_id BIGINT,
 	post_id BIGINT,
@@ -68,7 +68,7 @@ CREATE TABLE story_tags (
 );
 
 
-CREATE TABLE message_tags (
+CREATE TABLE message_tag (
 	id BIGINT,
 	page_id BIGINT,
 	post_id BIGINT,
@@ -85,8 +85,7 @@ CREATE TABLE place (
 	loc_longitude FLOAT
 );
 
-CREATE TABLE with_tags (
-	id BIGINT,
+CREATE TABLE with_tag (
 	page_id BIGINT,
 	post_id BIGINT,
 	fb_id BIGINT
