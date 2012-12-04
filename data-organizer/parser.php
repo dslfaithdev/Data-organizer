@@ -193,6 +193,21 @@ function createInserts($filePrefix, $array, $db) {
 }
 
 function insertToDB($query, $db) {
+  if(DB == "mysql") {
+    foreach($query as $key => $value){
+      foreach ($value as &$line)
+        $line = "(".implode(",", $line).")";
+      while(count($value)) {
+        #       print count($value).'.';
+        $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', array_splice($value,0,25000)).";".PHP_EOL;
+        #     print $sql;
+        if(!$db->query($sql))
+          die($db->error);
+      }
+    }
+    return;
+  }
+
   foreach ($query as &$t)
     foreach ($t as &$line)
       $line = "(".implode(",", $line).")";
@@ -318,4 +333,14 @@ function my_escape($key) {
   return $key;
 }
 
+function return_bytes ($size_str)
+{
+    switch (substr ($size_str, -1))
+    {
+        case 'M': case 'm': return (int)$size_str * 1048576;
+        case 'K': case 'k': return (int)$size_str * 1024;
+        case 'G': case 'g': return (int)$size_str * 1073741824;
+        default: return $size_str;
+    }
+}
 ?>
