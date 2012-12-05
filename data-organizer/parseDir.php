@@ -30,18 +30,20 @@ foreach($tars as $tar){
   else
     $csv = basename(substr($tar, 0, -4));
   $stat = sprintf("[%".strlen(count($tars))."d/%d] (%5.1F%%) %s ", $index, count($tars), $index++/count($tars)*100, $csv);
-  print PHP_EOL.$stat;
+  print $stat. "- uncompressing";
   exec("tar -xzvf $tar -C $tmpDir 2>&1 | awk '{print $2;}' | sort -n", $jsons);
   $table = [];
   $i = 1;
   foreach($jsons as $json){
-    print "\r ".$stat.sprintf(" - %6.2F%%  ",$i++/count($jsons)*100);
+    printf("\r%s- %6.2F%% %18s",$stat,$i++/count($jsons)*100, " ");
     if( substr($json, -strlen('.json')) != '.json') continue; //does not end with '.json'
     try {
       parseJsonString(file_get_contents($tmpDir."/".$json), $table);
       unlink($tmpDir."/".$json);
-      if( memory_get_usage(true) > 858993459) { // 2GB / 2.5
+      if( memory_get_usage() > 1073741824) { // 1GB = 1073741824, 2GB (2147483648)/ 2.5
+        print "\033[18D- writing to file.";
         createInserts($csv, $table, $db);
+        print "\033[5DDB.  ";
         if (!$db->ping()) $db = new mysqli("localhost", "root", "", "sincere");
         insertToDB($table, $db);
         unset($table); $table = [];
@@ -52,7 +54,9 @@ foreach($tars as $tar){
     }
   }
   try {
+    print "\033[18D- writing to file.";
     createInserts($csv, $table, $db);
+    print "\033[5DDB.  ";
     if (!$db->ping()) $db = new mysqli("localhost", "root", "", "sincere");
     insertToDB($table, $db);
     unset($table);
@@ -62,6 +66,7 @@ foreach($tars as $tar){
   } catch(Exception $e) {}
   unset($jsons);
   exec('mv -v '.$csv.'*.sql '.$outDir);
+  printf("\r%s- DONE%22s".PHP_EOL, $stat," ");
 }
 try {
   $db->close();
