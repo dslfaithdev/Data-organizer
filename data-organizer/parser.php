@@ -90,7 +90,7 @@ function parseJsonString($string, &$table = []) {
     isSetOr($post['likes']['count']),
     isSetOr($post['comments']['count']),
     'null', 'null', //we can't extract entropy from our crawled post
-    isSetOr($post['object_id'], 'null'),
+    isSetOr($post['object_id'], 'null', true),
     isSetOr($post['status_type'],'null',true),
     isSetOr($post['source'],'null',true),
     isSetOr($post['is_hidden'], 0),
@@ -172,6 +172,20 @@ function parseJsonString($string, &$table = []) {
             $matches[1], $matches[2], $matches[3], $user['id'], isSetOr($like['created_time'],'null',true)];
             //$matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
         }
+    }
+    if(isset($d['ep_shares'])) {
+      foreach($d['ep_shares']['data'] as $share) {
+        if(isset($share['from'])) {
+          $user=$share['from'];
+          if( isset($user['category'])) {
+            $table['page'][$user['id']] = [ $user['id'], my_escape($user['name']), my_escape($user['category']) ];
+          } else {
+            $table['fb_user'][$user['id']] = [ isSetOr($user['id'],0), isSetOr($user['name'],'null',true), "null" ];
+          }
+          $table['shares'][] =  [ strstr($share['id'],'_',true), $post_id, isSetOr($user['id'],0),
+            isSetOr($share['updated_time'],'0000-00-00 00:00:00',true), isSetOr($like['created_time'],'0000-00-00 00:00:00',true) ];
+        }
+      }
     }
   }
 

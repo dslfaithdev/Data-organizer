@@ -20,7 +20,7 @@ CREATE TABLE `page` (
 CREATE TABLE `fb_user` (
   `id` bigint(20) NOT NULL,
   `name` text,
-  `category` varchar(100) DEFAULT NULL,
+  `category` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -125,6 +125,15 @@ CREATE TABLE `likedby` (
   `fb_id` bigint(20) NOT NULL,
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`page_id`,`post_id`,`comment_id`,`fb_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `shares` (
+  `id` bigint(20) unsigned NOT NULL,
+  `post_id` bigint(20) unsigned NOT NULL,
+  `who` bigint(20) unsigned NOT NULL,
+  `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `updated_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`id`,`post_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 /* Useful */
