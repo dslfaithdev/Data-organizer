@@ -73,7 +73,7 @@ function parseJsonString($string, &$table = []) {
   $table["post"][] =  array(
     $post_id,
     $page_id,
-    $post['from']['id'],
+    isSetOr($users[0]['id'], 0),
     isSetOr($post['message'],'null',true),
     isSetOr($post['type'],'null',true),
     isSetOr($post['picture'],'null',true),

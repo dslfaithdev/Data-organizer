@@ -23,6 +23,8 @@ if(!is_dir($outDir))
   mkdir($outDir);
 
 $tars = glob($argv[1]."/{*.tgz,*.tar.gz}", GLOB_BRACE);
+if(file_exists("done.log"))
+  $tars = array_diff($tars, explode("\n", file_get_contents("done.log")));
 $index = 1;
 foreach($tars as $tar){
   if( substr_compare($tar, '.tar.gz', -strlen('.tar.gz'), strlen('.tar.gz')) === 0 )
@@ -46,7 +48,7 @@ foreach($tars as $tar){
         print "\033[5DDB.  ";
         if (!$db->ping()) $db = new mysqli("localhost", "root", "", "sincere");
         insertToDB($table, $db);
-        unset($table); $table = [];
+        $table = [];
       }
     } catch(Exception $e) {
 #      fwrite(STDERR, $json . " - " . $e->getMessage() . " ". $e->getFile() . ":". $e->getLine(). PHP_EOL);
@@ -67,6 +69,7 @@ foreach($tars as $tar){
   unset($jsons);
   exec('mv -v '.$csv.'*.sql '.$outDir);
   printf("\r%s- DONE%22s".PHP_EOL, $stat," ");
+  file_put_contents("done.log", $tar."\n", FILE_APPEND);
 }
 try {
   $db->close();
