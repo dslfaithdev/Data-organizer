@@ -38,12 +38,13 @@
           <span style="display:inline-block; padding-left:15px; padding-right:15px; border-left: 1px #C2C2C2 solid;">
             Rank by
             <select id="ranking" name="case">
-              <option>Text ranking</option>
-              <option>Entropy</option>
-              <option>Frequency</option>
-              <option disabled="disabled">Shares</option>
-              <option>Likes</option>
-              <option>Comments</option>
+              <option value="">Text ranking</option>
+              <option value="post-entropy">Post Entropy</option>
+              <option value="user-entropy">User Entropy</option>
+              <option value="frequency">Frequency</option>
+              <option value="shares" disabled="disabled">Shares</option>
+              <option value="likes">Likes</option>
+              <option value="comments">Comments</option>
             </select>
           </span>
 
@@ -64,20 +65,27 @@
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
     <script type="text/javascript">
       var messageMap = new Array();
+      var pageNum;
+      var disableScroll = false;
       function fadeTipbox(){ $('#tip_content').fadeOut(2000); }
-
+      
       function doSearch(keyword, page){
         if(keyword== "")
           return;
         var orderBy = $("#ranking").val();
-        var url = "//" + location.hostname + "/q.php?q=" + keyword + "&orderBy="+orderBy;
-        window.location.hash = "q=" + keyword + "&orderBy="+orderBy;
-        messageMap.length = 0;
+        if(orderBy != "")
+          orderBy="&orderBy="+orderBy;
+        var url = "//" + location.hostname + "/q.php?q=" + encodeURIComponent(keyword) + orderBy + "&page="+page;
+        window.location.hash = "q=" + keyword + orderBy;
+        if (page == 1)
+          messageMap.length = 0;
         //Disable the search button, show loader.
         $("#search_btn").attr("disabled", "disabled");
         $("#search_box").css("background", "url(image/ajax-loader.gif) no-repeat right center");
+        var append = (page == 1) ? false : true;
+        pageNum = page + 1;
         $.get(url, function(data) {
-          searchResult(data, false);
+          searchResult(data, append);
         },"json"
         ).complete( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");}); 
       }
@@ -85,6 +93,7 @@
       function searchResult(data, append) {
         if(!append)
           $('#results').empty();
+        disableScroll = false;
         var results = data['results'];
         //      objs = data;
 
@@ -111,8 +120,8 @@
             '<span class="like">'+results[i]['likes']+'</span> Likes · ' + 
             '<span class="share">'+results[i]['shares']+'</span> Shares · ' +
             '<span class="comment">'+results[i]['comments']+'</span> Comments · ' +
-            '<span class="freq">Frequency:'+results[i]['freq']+'</span> · ' +
-            '<span class="entropy">Entropy:'+results[i]['entropy']+
+            '<span class="entropy">'+results[i]['u_entropy']+'</span> User Entropy · ' +
+            '<span class="entropy">'+results[i]['p_entropy']+'</span> Post Entropy · ' +
             '</div>' +
             '<div class="excerpt">' + results[i]['excerpt']+'</div>'+
             '<div class="result_content" flag="0">' +
@@ -185,6 +194,13 @@
             }
           });
       });
+
+$(window).scroll(function() {
+  if($(document).height() - 2 * $(window).height() <= $(window).scrollTop() && !disableScroll) {
+    doSearch($('#search_box').val(), pageNum);
+    disableScroll = true;
+  }
+});
 
       /* doLinks script */ 
 
