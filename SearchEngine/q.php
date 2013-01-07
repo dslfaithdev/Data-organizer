@@ -15,7 +15,10 @@ $CONF = array();
 $CONF['sphinx_host'] = 'localhost';
 $CONF['sphinx_port'] = 9312; //this demo uses the SphinxAPI interface
 
-$CONF['psql_conncections_string'] = "user=sincere dbname=sincere";
+$CONF['mysql_host'] = "localhost";
+$CONF['mysql_username'] = "sincere-local";
+$CONF['mysql_password'] = "";
+$CONF['mysql_database'] = "sincere";
 
 $CONF['sphinx_index'] = "sincere_post"; // can also be a list of indexes, "main, delta"
 /*
@@ -234,7 +237,7 @@ if (!empty($q)) {
     if (!empty($ids)) {
 
         //Setup Database Connection
-        $db = pg_connect($CONF['psql_conncections_string']) or die("ERROR: unable to connect to database");
+        $db = mysqli_connect($CONF['mysql_host'],$CONF['mysql_username'],$CONF['mysql_password'], $CONF['mysql_database']) or die("ERROR: unable to connect to database");
 
 
         // Fer json return
@@ -244,13 +247,13 @@ if (!empty($q)) {
         //left outer join page ON (post.page_id=page.id)
         $sql = str_replace('$ids',implode(',',$ids),'SELECT page.id AS page_id, message,post.id as  post_id, created_time as createdtime,
           likes_count as likes, shares_count as shares, comments_count as comments, entr_ug as u_entropy,
-          entr_pg as p_entropy, page.name AS group, picture FROM post LEFT OUTER JOIN page ON (post.page_id=page.id) WHERE post.id in ($ids) ');
-        $result = pg_query($sql) or die($CONF['debug']?("ERROR: psql query failed: ".mysql_error()):"ERROR: Please try later");
+          entr_pg as p_entropy, page.name AS \'group\', picture FROM post LEFT OUTER JOIN page ON (post.page_id=page.id) WHERE post.id in ($ids) ');
+        $result = mysqli_query($db, $sql) or die($CONF['debug']?("ERROR: psql query failed: ".mysqli_error($db)):"ERROR: Please try later");
 
-        if (pg_num_rows($result) > 0) {
+        if (mysqli_num_rows($result) > 0) {
           $rows = array();
 
-          while ($row = pg_fetch_array($result, NULL, PGSQL_ASSOC)) {
+          while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
             $row['link'] = $row['page_id'].'/posts/'.$row['post_id'];
             $rows[$row['post_id']] = $row;
           }
@@ -273,13 +276,13 @@ if (!empty($q)) {
 
         //Run the Mysql Query
         $sql = str_replace('$ids',implode(',',$ids),$CONF['mysql_query']);
-        $result = pg_query($sql) or die($CONF['debug']?("ERROR: psql query failed: ".mysql_error()):"ERROR: Please try later");
+        $result = mysqli_query($db, $sql) or die($CONF['debug']?("ERROR: psql query failed: ".mysqli_error($db)):"ERROR: Please try later");
 
-        if (pg_num_rows($result) > 0) {
+        if (mysqli_num_rows($result) > 0) {
 
             //Fetch Results from Mysql (Store in an accociative array, because they wont be in the right order)
             $rows = array();
-            while ($row = pg_fetch_array($result, NULL, PGSQL_ASSOC)) {
+            while ($row = mysqli_fetch_array($result, MYSQLI_ASSOC)) {
                 $rows[$row['id']] = $row;
             }
 /*
