@@ -53,6 +53,7 @@ CREATE TABLE `post` (
   `application_id` bigint(20) DEFAULT NULL,
   `place_id` bigint(20) DEFAULT NULL,
   PRIMARY KEY (`page_id`,`id`),
+  KEY `post_id` (`id`),
   CONSTRAINT `post_ibfk_1` FOREIGN KEY (`page_id`) REFERENCES `page` (`id`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -69,6 +70,7 @@ CREATE TABLE `story_tags` (
   `id` bigint(20) DEFAULT NULL,
   `page_id` bigint(20) DEFAULT NULL,
   `post_id` bigint(20) DEFAULT NULL,
+  `comment_id` bigint(20) DEFAULT NULL,
   `offset` int(11) DEFAULT NULL,
   `length` int(11) DEFAULT NULL,
   `type` varchar(256) DEFAULT NULL,
@@ -81,6 +83,7 @@ CREATE TABLE `message_tags` (
   `id` bigint(20) DEFAULT NULL,
   `page_id` bigint(20) DEFAULT NULL,
   `post_id` bigint(20) DEFAULT NULL,
+  `comment_id` bigint(20) DEFAULT NULL,
   `offset` int(11) DEFAULT NULL,
   `length` int(11) DEFAULT NULL,
   `type` varchar(256) DEFAULT NULL,
