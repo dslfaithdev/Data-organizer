@@ -191,3 +191,44 @@ body{
   float: left;
   margin-right: 20px;
 }
+
+.comment_group_1 {
+  width: 45%;
+  margin-left: 5px;
+  float: left;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid red;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.comment_group_0 {
+  clear: left;
+  width: 45%;
+  float: left;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid blue;
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.comment_group_item_0 {
+  border-radius: 2px;
+  padding: 1px;
+  margin-bottom: 2px;
+  border: 1px solid blue;
+}
+
+.comment_group_item_1 {
+  border-radius: 2px;
+  padding: 1px;
+  margin-bottom: 2px;
+  border: 1px solid red;
+}
+
+.waiting {
+  float: left;
+  width: 250px;
+  height: 50px;
+  background: url('../image/ajax-loader.gif') no-repeat right center;
+}
