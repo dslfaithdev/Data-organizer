@@ -22,8 +22,8 @@ import warnings
 #Supress all warnings :)
 warnings.simplefilter('ignore')
 
-#print("Content-Type: text/html\n\n")
-print("Content-Type: text/plain\n")
+print("Content-Type: text/html\n\n")
+#print("Content-Type: text/plain\n")
 
 form = cgi.FieldStorage()
 pageID = form.getfirst("page",0);
@@ -81,7 +81,7 @@ Modularity_Threshold = 0.2
 #pageID = '282370021775789'
 con = mdb.connect('localhost', 'sincere-read', '', 'sincere')
 cur = con.cursor(mdb.cursors.DictCursor)
-cur.execute('select comment.id as CommentID, likedby.fb_id as LikeFromID, comment.fb_id as LikeToID from comment, likedby where likedby.page_id='+pageID+' AND likedby.post_id='+postID+' AND comment.id = likedby.comment_id AND comment.page_id=likedby.page_id AND comment.post_id=likedby.post_id;')
+cur.execute('select comment.id as CommentID, likedby.fb_id as LikeFromID, comment.fb_id as LikeToID from comment, likedby where likedby.page_id='+con.escape_string(pageID)+' AND likedby.post_id='+con.escape_string(postID)+' AND comment.id = likedby.comment_id AND comment.page_id=likedby.page_id AND comment.post_id=likedby.post_id;')
 rawlikedata = cur.fetchall()
 
 
@@ -205,24 +205,45 @@ if length != 0:
 #
 #FER added code.
 #Our result array.
-result=[{},{}]
+result=[{}]
 #Enumerate over our groups.
 for (i, group) in enumerate([OneGroup, AnotherGroup]):
+    if len(group) is 0:
+        break
+    if i is 1:
+        result.append({})
     inList=""
     for keys in group.keys():
         inList += "%d, " % keys
 
-    sql="SELECT message, fb_id, page_id, post_id, id, created_time FROM comment WHERE page_id="+pageID+" AND post_id="+postID+" AND fb_id IN ("+inList[0:-2]+");"
+    sql="SELECT message, fb_id, page_id, post_id, id, created_time FROM comment WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID)+" AND fb_id IN ("+inList[0:-2]+") ORDER BY created_time desc;"
     cur.execute(sql)
     for row in cur.fetchall():
         row['created_time'] = row['created_time'].isoformat()
         result[i]["%d" % row['id']] = { 'ranking':group[row['fb_id']],
             'd':row}
 
-
+#Nice json print-out
 s =json.dumps({'modularity': str(checkmodularity) ,'comments':result},  sort_keys=True,indent=2 * ' ')
 print('\n'.join([l.rstrip() for l in  s.splitlines()]))
 
-
-
-
+#generate ugly html..
+#cur.execute("SELECT message FROM post WHERE id="+postID+" AND page_id="+pageID)
+#row = cur.fetchall()
+#print '<div style="font-family: \'lucida grande\', tahoma, verdana, arial, sans-serif;font-size: 11px;">'
+#print row[0]['message']
+#print '<br/><i>'
+#print checkmodularity
+#print '</i>'
+#print '</div>'
+#width=700/len(result)
+#for group in result:
+#    print '<div style="width: '+ str(width) + 'px;border: 1px solid darkblue;float: left;">'
+##    print group
+#    for comment in group.values():
+#        print '<div style="border: 1px solid lightblue;font-family: \'lucida grande\', tahoma, verdana, arial, sans-serif;font-size: 11px;">'
+##        print comment
+##        print commentID['message']
+#        print comment['d']['message']
+#        print '</div>'
+#    print '</div>'
