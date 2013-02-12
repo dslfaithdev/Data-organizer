@@ -63,6 +63,7 @@
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
     <script type="text/javascript" src="js/json2.min.js"></script>
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
+    <script type="text/javascript" src="js/comments.js"></script>
     <script type="text/javascript">
       var messageMap = new Array();
       var pageNum;
@@ -106,11 +107,15 @@
         }
 
         for(var i=0; i<results.length; i++){
+          messageMap[results[i]['post_id']] = new Array();
+          messageMap[results[i]['post_id']]['comments'] = results[i]['comments'];
+          messageMap[results[i]['post_id']]['likes'] = results[i]['likes'];
+          messageMap[results[i]['post_id']]['shares'] = results[i]['shares'];
           if(results[i]['picture'] != null) {
-            messageMap[results[i]['post_id']] = '<img src="'+results[i]['picture']+'"/>  \n'+linkify(results[i]['message']);
+            messageMap[results[i]['post_id']]['message'] = '<img src="'+results[i]['picture']+'"/>  \n'+linkify(results[i]['message']);
           } else
-          messageMap[results[i]['post_id']] = linkify(results[i]['message']);
-          var obj = $('<div class="result_wrapper" postid="'+results[i]['post_id']+'">' +
+          messageMap[results[i]['post_id']]['message'] = linkify(results[i]['message']);
+          var obj = $('<div class="result_wrapper" id="'+results[i]['page_id']+"_"+results[i]['post_id']+'" postid="'+results[i]['post_id']+'" pageid="'+results[i]['page_id']+'">' +
             '<div class="result_row1">' +
             '<span class="expand_icon" title="See content"></span><span class="group"><a href="http://facebook.com/'+results[i]['link']+'" target="_blank">'+results[i]['group']+'</a></span>' +
             '<span class="ctime"> '+results[i]['createdtime']+'</span>' +
@@ -177,19 +182,30 @@
             if($(target).hasClass('expand_icon')){
               var parent = $(target).parent().parent();
               var pid = parent.attr('postid');
-              var message = messageMap[pid];
+              var pageid = parent.attr('pageid');
+              var message = messageMap[pid]['message'];
               parent.find('.excerpt').toggle();
               if(parent.find('.result_content').attr('flag') == 0){
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
                 element.attr('flag', 1);
                 element.css('display','block').html(message);
                 $(target).css('background-position-x', '-9px');
+                if(messageMap[pid]['comments'] > 5) {
+                  $("<div/>", {
+                    id: pageid + "_" + pid + "_waiting",
+                    class: "waiting",
+                    text: "Analyzing comments, please wait..."
+                  }).appendTo("#" + pageid + "_" +pid);
+                  GetOpinionsInComments(pageid, pid, 2);
+                }
               }else{
                 var element = $('.result_wrapper[postid='+pid+']').find('.result_content');
                 element.attr('flag', 0);
                 element.css('display','').html();
                 $(target).css('background-position-x', '');
-
+                var parentid = pageid + "_" + pid;
+                $("#comment_group_" + parentid + "_0").remove();
+                $("#comment_group_" + parentid + "_1").remove();
               }
             }
           });
