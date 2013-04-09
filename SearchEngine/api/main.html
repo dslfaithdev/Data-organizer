@@ -1,0 +1,54 @@
+<html>
+<head>
+  <title>
+    SIN API Explorer
+  </title>
+  <LINK REL=StyleSheet HREF="./styles.css" TYPE="text/css" MEDIA=screen>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="./main.js"></script>
+  <script type="text/javascript" src="./drawGraph.js"></script>
+  
+</head>
+<body>
+
+<div id="main_container" class="main_container">
+  <div id="topper" class="topper">
+    SIN API Explorer. <a href="./documentation.html">Documentation.</a>
+  </div>
+  <div id="query_section" class="query_section">
+    <div id="example" class="example">
+      Example Queries:<br/>
+      http://www.sincere.se/api/<strong>get</strong>/?<strong>postId</strong>=210455815693364, 10150696553437240 <br/>
+      http://www.sincere.se/api/<strong>get</strong>/?<strong>pageId</strong>=26012002239 <br/>
+      http://www.sincere.se/api/<strong>get</strong>/?<strong>userId</strong>=6815841748 <br/><br/>
+      
+      http://www.sincere.se/api/<strong>sin</strong>/?<strong>postId</strong>=210455815693364, 10150696553437240 <br/>
+      http://www.sincere.se/api/<strong>sin</strong>/?<strong>pageId</strong>=26012002239 <br/>
+      http://www.sincere.se/api/<strong>sin</strong>/?<strong>userId</strong>=6815841748 <br/>
+    </div>
+    <div id="loading_spinner" class="loading_spinner">
+      <img src="./images/spinnerLarge.gif" />
+      <div id="loading_text" class="loading_text">
+      </div>
+    </div>
+    <div class="clear"></div>
+    <div id="query_title" class="query_title">
+      http://www.sincere.se/api/
+    </div>
+    <div id="query_input_container" class="query_input_container">
+      <input type="text" id="query_input" class="query_input" />
+    </div>
+    <div id="query_submit" class="query_submit">
+      <a href="#" onclick="requestQuery();return false;" >Submit</a>
+    </div>
+  </div>
+  <div class="clear" ></div>
+  <div id="json_results_section" class="json_results_section">
+  
+  </div>
+
+</div>
+
+</body>
+</html>

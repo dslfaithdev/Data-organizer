@@ -1,0 +1,549 @@
+<html>
+<head>
+  <title>
+    SIN API Documentation
+  </title>
+  <LINK REL=StyleSheet HREF="./styles.css" TYPE="text/css" MEDIA=screen>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="./main.js"></script>
+  <script type="text/javascript" src="./drawGraph.js"></script>
+  
+</head>
+<body>
+
+<div id="main_container" class="main_container">
+  <div id="topper" class="topper">
+    <a href=".">SIN API Explorer.</a> Documentation.
+  </div>
+  <div class="clear"></div>
+  <div id="query_section" class="info">
+    <div id="explanation" class="explanation">
+      The SIN API has three major sections:<br/>
+      <div id="bullet_points" class="bullet_points">
+        &bull; <a href="#GET">GET</a> - allows for getting information we have crawled from OSNs.<br/>
+        &bull; <a href="#SIN">SIN</a> - allows for retrieving Social Interaction Networks around the content shared.<br/>
+        &bull; <a href="#POST">POST</a> - allows for insertion in our DataBase (Advanced).<br/>
+      </div>
+    </div>
+  </div>
+  <div id="GET" name="GET" class="explanation">
+    <strong>GET requests</strong><br/>
+    The get API is fairly straight forward. Applications can use these API calls in order to get information about the content they are interested in.
+    There is no need to download a client side library for any programming languages. 
+    Applications can simply send requests through HTTP and handle the JSON responses in the language of their choice.
+    We currently, support three different major types of get requests:
+    <div id="get_bullet_points" class="bullet_points">
+      &bull; <a href="#POSTID">postId</a> - retrieves information about a set of posts, including comments and likes on the post. <br/>
+      &bull; <a href="#PAGEID">pageId</a> - retrieves information about a set of communities, including posts, comments and likes on posts. </br>
+      &bull; <a href="#USERID">userId</a> - retrieves all posts created by a set of users. <br/>
+    </div>
+  </div>
+  <div id="POSTID" name="POSTID" class="explanation">
+    <strong>postId</strong><br/>
+    Here we go over a few example codes on how users can retrieve the information about posts using SIN API.
+    The postId, simply takes a comma separated list of valid post ids and retrieves information about the post itself. It also retrieves the comments, and likes on the post.
+    Applications need to send a request to "http://www.sincere.se/api/get/?postId=p1, p2, p3", where p1, p2, and p3 are valid post ids and handle the JSON response.
+    The following code snippets show the postId could be called from different programming languages: <br/>
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/get/?postId=210455815693364, 10150696553437240";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/get/?postId=210455815693364, 10150696553437240";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/get/?postId=210455815693364, 10150696553437240"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  </div>
+  <div id="PAGEID" name="PAGEID" class="explanation">
+    <strong>pageId</strong><br/>
+    Applications can request to get information about a community. In fact, using a single API request,
+    applications can retrieve information about multiple cummunities on OSNs.
+    The response includes information regarding the page such as the name, id, and category of the community, 
+    in addition the response includes the posts shared in the community, the comments and likes on each post.
+    The API requires a comma separated
+    list of valid community ids. Retrieving this information requires sending a request to "http://www.sincere.se/api/get/?pageId=p1, p2, p3", where 
+    p1, p2, and p3 are valid community ids. <br/>
+    
+    We will go over a few code snippets to show how clients can retrieve this information using different programming languages.
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/get/?pageId=26012002239";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/get/?pageId=26012002239";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/get/?pageId=26012002239"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  </div>
+  <div id="USERID" name="USERID" class="explanation">
+    <strong>userId</strong><br/>
+    This functionality is not easily achievable though the current available OSN APIs. But using a 
+    single API request, applications can retrieve all posts, and comments and likes on each post, made by 
+    the given user. In fact, one request could be used for multiple users.
+    Applications need to send a request to "http://www.sincere.se/api/get/?userId=u1, u2, u2", where u1, u2, and u3 are
+    valid user ids and handle the response. <br/>
+    
+    We show some code snippets on how applications can send a request to our API in different programming languages:
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/get/?userId=6815841748";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/get/?userId=6815841748";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/get/?userId=6815841748"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  </div>
+  <div id="SIN" name="SIN" class="explanation">
+    <strong>SIN requests</strong><br/>
+    The SIN API is very similar to the GET API on how it can be used. The requests
+    to this API look fairly similar to the calls we have had previously in the 
+    previous section. However, with these API requests, applications can specify 
+    the type of interaction they are interested in, in order to narrow down the 
+    results they get back.
+    <div id="get_bullet_points" class="bullet_points">
+      &bull; <a href="#SINPOSTID">postId</a> - retrieves all interactions that have taken place in a community. A comma separated list of community IDs will allow this api request to retrieve all interactions around all the given pages. However, this type of behavior is discouraged because this api request is very expensive and it is very likely to time out. <br/>
+      &bull; <a href="#SINPAGEID">pageId</a> - retrieves all interactions on a set of posts specified by their ids. </br>
+      &bull; <a href="#SINUSERID">userId</a> - retrieves all interactions around the posts made by the given set of users. <br/>
+    </div>
+  </div>
+  <div id="SINPOSTID" name="SINPOSTID" class="explanation">
+    <strong>postId</strong><br/>
+    Here we go over a few example codes on how users can retrieve the information about posts using SIN API.
+    The postId, simply takes a comma separated list of valid post ids and retrieves interactions done on the posts.
+    Applications need to send a request to "http://www.sincere.se/api/sin/?postId=p1, p2, p3", where p1, p2, and p3 are valid post ids and handle the JSON response.
+    The following code snippets show the postId could be called from different programming languages: <br/>
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/sin/?postId=210455815693364, 10150696553437240";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/sin/?postId=210455815693364, 10150696553437240";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/sin/?postId=210455815693364, 10150696553437240"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  </div>
+  <div id="SINPAGEID" name="SINPAGEID" class="explanation">
+    <strong>pageId</strong><br/>
+    Applications can request to get interactions done in a set of communities. In fact, using a single API request,
+    applications can retrieve interactions done in multiple cummunities on OSNs.
+    The response includes all interactions done in the given set of community ids, including likes on the posts, comments on the posts, and likes on the comments.
+    The API requires a comma separated
+    list of valid community ids. Retrieving this information requires sending a request to "http://www.sincere.se/api/sin/?pageId=p1, p2, p3", where 
+    p1, p2, and p3 are valid community ids. <br/>
+    
+    We will go over a few code snippets to show how clients can retrieve this information using different programming languages.
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/sin/?pageId=26012002239";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/sin/?pageId=26012002239";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/sin/?pageId=26012002239"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  </div>
+  <div id="SINUSERID" name="SINUSERID" class="explanation">
+    <strong>userId</strong><br/>
+    This functionality is not easily achievable though the current available OSN APIs. But using a 
+    single API request, applications can retrieve all interactions on posts made by the given set of users.
+    Applications need to send a request to "http://www.sincere.se/api/sin/?userId=u1, u2, u2", where u1, u2, and u3 are
+    valid user ids and handle the response. <br/>
+    
+    We show some code snippets on how applications can send a request to our API in different programming languages:
+    <div id="js" class="explanation">
+      <strong>JavaScript (jQuery)</strong>
+      <div id="js_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code snippet takes advantage of the jQuery library, make sure to include it.
+          
+  var url = "http://www.sincere.se/api/sin/?userId=6815841748";
+  $.get(url, function(data) {
+      var response = JSON.parse(data);
+                
+      // response has the post information in JSON format.
+      // check for response['error'] to make sure no errors have occured on the server side.
+                
+  });
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="php" class="explanation">
+      <strong>PHP</strong>
+      <div id="php_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  // This code takes advantage of curl.
+  $url = "http://www.sincere.se/api/sin/?userId=6815841748";
+  
+  $response = get_json($url);
+  
+  if($response != false) {
+      // $response has the post information in JSON format.
+      // check for $response['error'] to make sure no errors have occured on the server side.
+  }
+  
+  function get_json($url) {
+      $ch = curl_init();
+  
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_URL, $url);
+  
+      $data = curl_exec($ch);
+      $resultCode - curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      
+      if ($resultCode == 200) {
+          return json_decode($data);
+      } else {
+          return false;
+      }
+  }
+          </code>
+        </pre>
+      </div>
+    </div>
+    <div id="python" class="explanation">
+      <strong>Python</strong>
+      <div id="python_code_snippet" class="code_snippet">
+        <pre>
+          <code>
+  import urllib, json
+
+  url = "http://www.sincere.se/api/sin/?userId=6815841748"
+  
+  data = urllib.urlopen(url)
+  response = json.loads(data.read())
+  
+  # response has the post information in JSON format.
+  # check for response['error'] to make sure no errors have occured on the server side.
+          </code>
+        </pre>
+      </div>
+    </div>
+  <div class="clear" ></div>
+  
+  </div>
+
+</div>
+
+</body>
+</html>
