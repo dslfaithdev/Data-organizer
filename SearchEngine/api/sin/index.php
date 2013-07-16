@@ -64,7 +64,7 @@ class api_sin extends apiClass{
     $query = "select comment.id as CommentID, likedby.fb_id as LikeFromID, comment.fb_id as LikeToID from comment, likedby where likedby.page_id=" . $pageId . " AND likedby.post_id=" . $postId . " AND comment.id=likedby.comment_id AND comment.page_id=likedby.page_id";
 
     $query_result = $this->safe_mysql_query($query);
-    $start_from = 0;
+    $start_from =  0;
     $count = 0;
     $row = array();
     while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {

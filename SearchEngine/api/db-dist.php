@@ -1,12 +1,12 @@
 <?php
-$db_ip = 'sincere.se';           
-
-$db_user = 'sincere-read';
-$db_pass = 'secretPassword';
+$db_ip = 'localhost';           
+$db_user = '';
+$db_pass = '';
+$db_port = 3306; 
 
 // the name of the database that you create for footprints.
-$db_name = 'crawled';
-$mysqli = new mysqli($db_ip, $db_user, $db_pass, $db_name);
+$db_name = 'sincere';
+$mysqli = new mysqli($db_ip, $db_user, $db_pass, $db_name, $db_port);
 if(!$mysqli)
 {
 	die('Could not connect: ' . $mysqli->error);

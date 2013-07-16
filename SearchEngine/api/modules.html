@@ -1,0 +1,475 @@
+<html>
+<head>
+  <title>
+    Loadable Modules Documentation
+  </title>
+  <LINK REL=StyleSheet HREF="./styles.css" TYPE="text/css" MEDIA=screen>
+  <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="./main.js"></script>
+  <script type="text/javascript" src="./drawGraph.js"></script>
+  
+</head>
+<body>
+
+<div id="main_container" class="main_container">
+  <div id="topper" class="topper">
+    <a href=".">SIN API Explorer.</a> <a href="./documentation.html">Documentation.</a> Extended Modules.
+  </div>
+  <div id="query_section" class="query_section">
+    <div id="explanation" class="explanation">
+      The SIN API has an Object Oriented Programming (OOP) design, which allows developers and
+      applications to extend the classes designed very easily. Developers may extend our classes in order to
+      modify or improve our functionalities or insert to and update the data in our database. Furtheremore, 
+      users can modify our database schema by adding new columns to the existing tables or introducing 
+      new tables for their needs. <br/>
+      
+      Our API is written in PHP, therefore anyone interested in extending the code will need to use 
+      PHP. Please note that it is extremely difficult to maintain multiple versions of the code in different 
+      languages with limited resources. <br/>
+      
+      <strong>Figure 1</strong> shows a simplified version of the initial design of the SIN API. 
+      
+      <br/><strong>The abstract class</strong><br/> 
+      The abstract class simply defines a set of abstract function prototypes to be implemented in the classes extended from it.
+      In addition it defines a default constructor for all the subclasses which creates a DataBase object.
+      This object will manage all the interactions with the database. Please make sure you never try to 
+      delete anything from the database unless you are 100% sure that you introduced whatever you are trying
+      to delete and that your delete statements will not affect any other data in our database. It is not 
+      easy to use the back ups and restoring data will consume a lot of time. So please check all your delete 
+      statements a few times before executing them.
+      
+      This class also provides some functionalities which we believe all extended classes will benefit from.
+      We have written our own safe_mysql_query which simply escapes all query strings to prevent against 
+      mysql injection attacks. Please use safe_mysql_query instead of mysql_query or other similar functions 
+      provided by PHP to keep our database safe.
+      
+      <br/><strong>The get class</strong><br/> 
+      This class extends the abstract class. Implements all the abstract functions introduced in the abstract 
+      class. Depending on the queries to this class, the response includes a complete set of information 
+      which would require multiple queries to Facebook's API. For more information please visit our 
+      <a href="./documentation.html">documentation's</a> page.
+      
+      <br/><strong>The sin class</strong><br/> 
+      Similar to the get class, this class also extends the abstract class directly. It implements the 
+      same functions that the get class does, but the functionality is different. Instead of computing 
+      the information posted similar to what Facebook's API returns, this class computes Social Interaction 
+      Networks and the response includes the SINs in addition to information about posts. For more information 
+      please visit our <a href="./documentation.html">documentation's</a> page.
+      
+      <br/>
+      Below we show the source code of the abstract class, get class and the sin class respectively.
+      Please use the source code as a guide. The code is relatively clean and well documented. As a developer
+      depending on your needs, you may choose to extend any of the three classes. Once done with your class
+      you may email the class to rvnia [at] ucdavis (dot) edu. We will notify you once your class is 
+      uploaded to our server and you may use it. Please note that we will review all classes submitted 
+      in order to keep our database safe. The cleaner and better documentation means that your class will 
+      be uploaded a lot quicker.
+      
+      
+      <br/><br/>
+      Note:
+      <br/><br/>
+      For the most up to date codes please check our 
+      <a href="https://github.com/dslfaithdev/Data-organizer/tree/master/SearchEngine/api">github repository</a>. 
+      The following code snippets are
+      simply here to give developers an idea of what to expect, we do not intent to update these snippets.
+    </div>
+    
+  </div>
+  <div class="clear" ></div>
+  <br/><strong>The abstract class</strong><br/> 
+    <div id="abstract_class" class="code_snippet">
+        <pre>
+          <code>
+// This is the abstract of the API class. Both GET and SIN API's are extended classes from this class.
+abstract class apiClass {
+  protected $limit = 25;
+
+  // This is the main constructore of the class and extended classes which establishes the
+  // database connection and creates a database object for this and extended class to access the db.
+  public function __construct(mysqli $mysqli) {
+    $this->db_con = $mysqli;
+  }
+  
+  // Sets the $limit variable.
+  public function setLimit($limit) {
+    $this->limit = $limit;
+  }
+  
+  // The following functions need to be implemented in the classes extended from this class directly.
+  abstract protected function getLikesOnPost($pageId, $postId, $limit, $poster=null);
+  
+  abstract protected function getCommentsOnPost($pageId, $postId, $limit, $poster=null);
+  
+  abstract protected function ProcessPostQuery($query);
+    
+  // This public fuction retrieves GET or SIN information on $limited number of posts made by this
+  // user. GET or SIN response depends on which subclass initiates the request.
+  public function RetrieveUserInformation($userId) {
+    $query = "SELECT * FROM post WHERE from_id IN ($userId) LIMIT " .$this->limit;
+    $result['posts'] = $this->ProcessPostQuery($query);
+    $json_result = json_encode($result);
+    return $json_result;
+  
+  }
+  
+  
+  public function RetrieveCommunityInformation($pageId) {
+    $query = "SELECT * FROM page WHERE id IN ($pageId)";
+  
+    $query_result = $this->safe_mysql_query($query);
+  
+    $count = 0;
+    $response = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      $pageId = $result['id'];
+      $response[$count]['community_id'] = $result['id'];
+      $response[$count]['name'] = $result['name'];
+      $response[$count]['category'] = $result['category'];
+  
+      $post_query = "SELECT * FROM post WHERE page_id=$pageId LIMIT " . $this->limit;
+    
+      $response[$count]['posts'] = $this->ProcessPostQuery($post_query);
+  
+      $count += 1;
+    }
+  
+    $row_json = json_encode($response);
+    return $row_json;
+  
+  
+  }
+  
+  // This function works in the same way independent of the subclass in was initiated from.
+  public function RetrievePostInformation($postId) {
+    $query = "select * from post WHERE id IN ($postId)";
+  
+    $result = $this->ProcessPostQuery($query);
+    $json_result = json_encode($result);
+    return $json_result;
+  }
+  
+  // Each post row has the following information. We have to check to see whether the fields are
+  // not null before setting the response values.
+  protected function getPostRow($result) {
+    $row['community_id'] = $result['page_id'];
+    $row['post_id'] = $result['id'];
+    $row['from'] = $result['from_id'];
+    $row['created_time'] = $result['created_time'];
+    if ($result['message'] != null) {
+      $row['message'] = $result['message'];
+    }
+    if ($result['type'] != null) {
+      $row['type'] = $result['type'];
+    }
+    if ($result['type'] != null) {
+      $row['type'] = $result['type'];
+    }
+    if ($result['picture'] != null) {
+      $row['picture'] = $result['picture'];
+    }
+    if ($result['story'] != null) {
+      $row['story'] = $result['story'];
+    }
+    if ($result['link'] != null) {
+      $row['link'] = $result['link'];
+    }
+    if ($result['icon'] != null) {
+      $row['icon'] = $result['icon'];
+    }
+    if ($result['object_id'] != null) {
+      $row['object_id'] = $result['object_id'];
+    }
+    if ($result['status_type'] != null) {
+      $row['status_type'] = $result['status_type'];
+    }
+    if ($result['source'] != null) {
+      $row['source'] = $result['source'];
+    }
+    if ($result['place_id'] != null) {
+      $row['place_id'] = $result['place_id'];
+    }
+    
+    return $row;
+  }
+  
+  
+  // This protected function takes care of the MySQL Injection attacks by escaping the query strings.
+  // Please use this function instead of mysql_query or any other functions provided by PHP for
+  // sending requests to the Database.
+  protected function safe_mysql_query($query) {
+    $result = $this->db_con->query($this->db_con->real_escape_string($query));
+    if (!$result) {
+  
+    }
+    return $result;
+  }
+}
+          </code>
+        </pre>
+      </div>
+      <br/><strong>The get class</strong><br/> 
+      <div id="getclass" class="code_snippet">
+      
+        <pre>
+          <code>
+require "../db.php";
+require "../api.php";
+
+// This class manages all get requests.
+// This class is extended from the apiClass which manages connecting to the DataBase and
+// creates a DB Object which can be used to fully access our database.
+class api_get extends apiClass {
+
+  // Given a community ID, [page, group, user ID], we return $limited number of posts, comments, 
+  // likes on posts and comments.
+  public function RetrieveCommunityInformation($pageId) {
+    $query = "SELECT * FROM page WHERE id IN ($pageId)";
+    
+    
+    // safe_mysql_query is a function written in apiClass and basically takes care of
+    // mysql injections. Please use this method instead of mysql_query or similar functions provided
+    // by php.
+    $query_result = $this->safe_mysql_query($query);
+  
+    $count = 0;
+    $response = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      $pageId = $result['id'];
+      $response[$count]['community_id'] = $result['id'];
+      $response[$count]['name'] = $result['name'];
+      $response[$count]['category'] = $result['category'];
+  
+      $post_query = "SELECT * FROM post WHERE page_id=$pageId LIMIT " . $this->limit;
+    
+      $response[$count]['posts'] = $this->ProcessPostQuery($post_query);
+  
+      $count += 1;
+    }
+  
+    $row_json = json_encode($response);
+    return $row_json;
+  }
+
+  // This function is protected and used only within this class and extended classes.
+  // Given a request for a given post ID, it computes and returns all comments and likes on comments,
+  // and on posts.
+  protected function ProcessPostQuery($query) {
+    $query_result = $this->safe_mysql_query($query);
+  
+    $count = 0;
+    $row = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      $pageId = $result['page_id'];
+      $postId = $result['id'];
+    
+      $row[$count] = $this->getPostRow($result);
+    
+      $comment_row = $this->getCommentsOnPost($pageId, $postId, $this->limit);
+      $row[$count]['comments'] = $comment_row;
+    
+      $likes_row = $this->getLikesOnPost($pageId, $postId, $this->limit);
+      $row[$count]['likes'] = $likes_row;
+      $count += 1;
+    }
+  
+    return $row;
+  }
+  
+  // Returns $limit number of likes on a give post id.
+  protected function getLikesOnPost($pageId, $postId, $limit, $poster=null) {
+    $likes_query = "SELECT * FROM likedby WHERE page_id=$pageId AND post_id=$postId AND comment_id=0 LIMIT $limit";
+    
+    $likes_query_result = $this->safe_mysql_query($likes_query);
+  
+    $likes_count = 0;
+    $likes_row = array();
+    while($likes_result = $likes_query_result->fetch_array(MYSQLI_ASSOC)) {
+      $likes_row[$likes_count]['created_time'] = $likes_result['created_time'];
+      if( $likes_result['fb_id'] != null) {
+        $likes_row[$likes_count]['from'] = $likes_result['fb_id'];
+      }
+      $likes_count += 1;
+    }
+    return $likes_row;
+  }
+  
+  // Returns $limit number of comments on a post
+  protected function getCommentsOnPost($pageId, $postId, $limit, $poster=null) {
+    $comments_query = "SELECT * FROM comment WHERE page_id=$pageId AND post_id=$postId LIMIT $limit";
+    
+    $comments_query_result = $this->safe_mysql_query($comments_query);
+  
+    $comment_count = 0;
+    $comment_row = array();
+    while($comment_result = $comments_query_result->fetch_array(MYSQLI_ASSOC)) {
+      // Some fields we are 100% sure that won't be null, therefore we don't need to check.
+      // For other fields, we always check and only set the field in the response if it is not null
+      // in the database.
+      $comment_row[$comment_count]['comment_id'] = $comment_result['id'];
+      $comment_row[$comment_count]['created_time'] = $comment_result['created_time'];
+      if( $comment_result['fb_id'] != null) {
+        $comment_row[$comment_count]['from'] = $comment_result['fb_id'];
+      }
+      if( $comment_result['message'] != null) {
+        $comment_row[$comment_count]['message'] = $comment_result['message'];
+      }
+      $comment_count += 1;
+    }
+    
+    return $comment_row;
+  }
+  
+}
+          </code>
+        </pre>
+      </div>
+      <br/><strong>The sin class</strong><br/>
+      <div id="sinclass" class="code_snippet">
+       
+        <pre>
+          <code>
+require "../db.php";
+require "../api.php";
+
+// This class manages all sin requests.
+// This class is extended from the apiClass which manages connecting to the DataBase and
+// creates a DB Object which can be used to fully access our database.
+class api_sin extends apiClass{
+  
+  // Given a community ID, [page, group, user ID], we return $limited number of interactions on
+  // $limit number of posts.
+  public function RetrieveCommunityInformation($pageId) {
+    $query = "SELECT * FROM page WHERE id IN ($pageId)";
+  
+    $query_result = $this->safe_mysql_query($query);
+  
+    $count = 0;
+    $response = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      $pageId = $result['id'];
+  
+      $post_query = "SELECT * FROM post WHERE page_id=$pageId LIMIT " . $this->limit;
+      
+      $result = $this->ProcessPostQuery($post_query);
+      $response = array_merge($response, $result); 
+  
+      $count += 1;
+    }
+  
+    $row_json = json_encode($response);
+    return $row_json;
+  }
+
+  // This function is protected and used only within this class and extended classes.
+  // Given a request for a given post ID, it computes and returns $limit number of SINs.
+  protected function ProcessPostQuery($query) {
+    $query_result = $this->safe_mysql_query($query);
+  
+    $count = 0;
+    $row = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      $pageId = $result['page_id'];
+      $postId = $result['id'];
+      $poster = $result['from_id'];
+    
+      $post_info = $this->getPostRow($result);
+    
+      $comment_row = $this->getCommentsOnPost($pageId, $postId, $this->limit, $poster);
+    
+      $likes_row = $this->getLikesOnPost($pageId, $postId, $this->limit, $poster);
+      
+      $likes_on_comments_row = $this->getLieksSinOnComments($pageId, $postId);
+      
+      $row = array_merge($row, $comment_row, $likes_row, $likes_on_comments_row);
+      
+      $count += 1;
+    } 
+    return $row;
+  }
+  
+  // This is a private function, used only within this class.
+  // It basically computes and returns the SIN of likes on comments on a given post.
+  private function getLieksSinOnComments($pageId, $postId) {
+    $query = "select comment.id as CommentID, likedby.fb_id as LikeFromID, comment.fb_id as LikeToID from comment, likedby where likedby.page_id=" . $pageId . " AND likedby.post_id=" . $postId . " AND comment.id=likedby.comment_id AND comment.page_id=likedby.page_id";
+
+    $query_result = $this->safe_mysql_query($query);
+
+    $count = 0;
+    $row = array();
+    while($result = $query_result->fetch_array(MYSQLI_ASSOC)) {
+      if($count < $start_from) {
+       $count += 1;
+       continue;
+      }
+      $row[$count]['page_id'] = $pageId;
+      $row[$count]['post_id'] = $postId;
+      $row[$count]['comment_id'] = $result['CommentID'];
+      $row[$count]['from_id'] = $result['LikeFromID'];
+      $row[$count]['to_id'] = $result['LikeToID'];
+      $row[$count]['type'] = "like";
+      $count += 1;
+    }
+    return $row;
+  }
+  
+  // This function computes and returns SINs of likes on a given post.
+  protected function getLikesOnPost($pageId, $postId, $limit, $poster=null) {
+    $likes_query = "SELECT * FROM likedby WHERE page_id=$pageId AND post_id=$postId AND comment_id=0 LIMIT $limit";
+    
+    $likes_query_result = $this->safe_mysql_query($likes_query);
+  
+    $likes_count = 0;
+    $likes_row = array();
+    while($likes_result = $likes_query_result->fetch_array(MYSQLI_ASSOC)) {
+      $likes_row[$likes_count]['type'] = 'like';
+      $likes_row[$likes_count]['page_id'] = $pageId;
+      $likes_row[$likes_count]['post_id'] = $postId;
+      $likes_row[$likes_count]['comment_id'] = null;
+      $likes_row[$likes_count]['to_id'] = $poster;
+      if ($likes_result['created_time'] != null) {
+        $likes_row[$likes_count]['created_time'] = $likes_result['created_time'];
+        
+      }
+      if( $likes_result['fb_id'] != null) {
+        $likes_row[$likes_count]['from_id'] = $likes_result['fb_id'];
+        
+      }
+      $likes_count += 1;
+    }
+    return $likes_row;
+  }
+  
+  // This function computes and returns the SINs of comments on a given post.
+  protected function getCommentsOnPost($pageId, $postId, $limit, $poster=null) {
+    $comments_query = "SELECT * FROM comment WHERE page_id=$pageId AND post_id=$postId LIMIT $limit";
+    
+    $comments_query_result = $this->safe_mysql_query($comments_query);
+  
+    $comment_count = 0;
+    $comment_row = array();
+    while($comment_result = $comments_query_result->fetch_array(MYSQLI_ASSOC)) {
+      $comment_row[$comment_count]['type'] = 'comment';
+      $comment_row[$comment_count]['page_id'] = $pageId;
+      $comment_row[$comment_count]['post_id'] = $postId;
+      $comment_row[$comment_count]['comment_id'] = $comment_result['id'];
+      $comment_row[$comment_count]['to_id'] = $poster;
+      $comment_row[$comment_count]['created_time'] = $comment_result['created_time'];
+      if( $comment_result['fb_id'] != null) {
+        $comment_row[$comment_count]['from_id'] = $comment_result['fb_id'];
+      }
+      $comment_count += 1;
+    }   
+    return $comment_row;
+  }
+}
+
+          </code>
+        </pre>
+      </div>
+
+</div>
+
+</body>
+</html>
