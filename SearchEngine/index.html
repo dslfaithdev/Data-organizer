@@ -132,6 +132,7 @@
             '<div class="result_content" flag="0">' +
             'This is the main content' +
             '</div>' +
+            '<div class="comments"></div>' +
             '</div>'
           );
           $('#results').append(obj);
@@ -190,12 +191,10 @@
                 element.attr('flag', 1);
                 element.css('display','block').html(message);
                 $(target).css('background-position-x', '-9px');
-                if(messageMap[pid]['comments'] > 5) {
-                  $("<div/>", {
-                    id: pageid + "_" + pid + "_waiting",
-                    class: "waiting",
-                    text: "Analyzing comments, please wait..."
-                  }).appendTo("#" + pageid + "_" +pid);
+                parent.find(".comments").show();
+                if(messageMap[pid]['comments'] > 0 && parent.find(".comments").attr('done') != 1) {
+                  parent.find(".comments").attr('done',1);
+                  $("#"+pageid + "_"+pid+">.comments").html('<div id="' + pageid + "_" + pid + '_waiting" class="waiting">Analyzing comments, please wait...</div>');
                   GetOpinionsInComments(pageid, pid, 2);
                 }
               }else{
@@ -203,9 +202,7 @@
                 element.attr('flag', 0);
                 element.css('display','').html();
                 $(target).css('background-position-x', '');
-                var parentid = pageid + "_" + pid;
-                $("#comment_group_" + parentid + "_0").remove();
-                $("#comment_group_" + parentid + "_1").remove();
+                parent.find(".comments").hide();
               }
             }
           });

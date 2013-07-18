@@ -21,7 +21,8 @@ function ShowCommentOpinions(data) {
     break;
   }
   var jQueryParentId = "#" + parentid;
-  $(jQueryParentId + "_waiting").remove();
+  $(jQueryParentId + ">.comments").html("");
+  $(jQueryParentId + ">.comments").attr("done",1);
   for (var i =0; i < data['comments'].length; i++) {
     var comments = new Array();
     var count = 0;
@@ -34,7 +35,7 @@ function ShowCommentOpinions(data) {
     $("<div/>", {
       id: "comment_group_" + parentid + "_" + i,
       class: "comment_group_" + i
-    }).appendTo(jQueryParentId);
+    }).appendTo(jQueryParentId+">.comments");
     var comment_group_div = "#comment_group_" + parentid + "_" + i;
     for (var j = 0; j < comments.length; j++) {
       $("<div/>", {
@@ -46,7 +47,7 @@ function ShowCommentOpinions(data) {
   }
 }
 
-// Here's a more flexible version, which allows you to create 
+// Here's a more flexible version, which allows you to create
 // reusable sort functions, and sort by any field
 
 function sort_by(field, reverse, primer){
