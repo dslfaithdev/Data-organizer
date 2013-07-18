@@ -209,6 +209,11 @@ result=[{}]
 #Enumerate over our groups.
 for (i, group) in enumerate([OneGroup, AnotherGroup]):
     if len(group) is 0:
+        sql="SELECT message, fb_id, page_id, post_id, id, created_time FROM comment WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID)+" ORDER BY created_time desc;"
+        cur.execute(sql)
+        for row in cur.fetchall():
+            row['created_time'] = row['created_time'].isoformat()
+            result[0]["%d" % row['id']] = { 'ranking':-1, 'd':row}
         break
     if i is 1:
         result.append({})
