@@ -1,6 +1,6 @@
 <?
 // define('DB', 'psql')
-ini_set('memory_limit', '256M');
+ini_set('memory_limit', '512M');
 
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
@@ -50,7 +50,7 @@ function parseJsonString($string, &$table = []) {
     foreach($post[$type] as $tags)
       foreach($tags as $tag) {
           $table[$type][] = [
-          $tag['id'], $page_id, $post_id, NULL, $tag['offset'],
+          $tag['id'], $page_id, $post_id, 'null', $tag['offset'],
           $tag['length'], isSetOr($tag['type'],'null',true), my_escape($tag['name']) ];
       }
     unset($post[$type]);
@@ -219,6 +219,8 @@ function createInserts($filePrefix, $array, $db) {
 
 function insertToDB($query, $db) {
   if(DB == "mysql") {
+    if(!$db->autocommit(FALSE))
+      die($db->error);
     foreach($query as $key => $value){
       foreach ($value as &$line)
         $line = "(".implode(",", $line).")";
@@ -226,8 +228,10 @@ function insertToDB($query, $db) {
         #       print count($value).'.';
         $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', array_splice($value,0,25000)).";".PHP_EOL;
         #     print $sql;
-        if(!$db->query($sql))
+        if(!$db->query($sql)) {
+          file_put_contents("error.sql", $sql);
           die($db->error);
+        }
   #        throw new Exception($db->error, E_WARNING);
       }
     }
@@ -353,7 +357,7 @@ function my_escape($key) {
       return "'".pg_escape_string($key)."'";
     if(DB == "mysql") {
       global $db;
-      return "'".$db->real_escape_string($key)."'";
+      return "'".addcslashes($db->real_escape_string($key),'%_')."'";
     }
   }
   return $key;
