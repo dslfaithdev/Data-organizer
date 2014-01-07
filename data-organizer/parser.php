@@ -1,5 +1,4 @@
 <?
-// define('DB', 'psql')
 ini_set('memory_limit', '512M');
 
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
@@ -8,7 +7,7 @@ function exception_error_handler($errno, $errstr, $errfile, $errline ) {
 set_error_handler("exception_error_handler");
 
 function parseJsonString($string, &$table = []) {
-
+  $comments = array();
   $data = preg_split("/(\r\n|\n)/", $string);
   //Parse the first row as a post(message).
   $post = json_decode(array_shift($data),true);
@@ -121,7 +120,6 @@ function parseJsonString($string, &$table = []) {
     if(isset($d['ep_likes'])) {
       if(empty($d['ep_likes']['data']))
         continue;
-      preg_match('/([0-9]+)_([0-9]+)\\/likes/', current($d['ep_likes']['paging']),$matches);
       foreach ($d['ep_likes']['data'] as $user)
         if(isset($user['id'])) {
           if( isset($user['category'])) {
@@ -130,14 +128,12 @@ function parseJsonString($string, &$table = []) {
             $table['fb_user'][$user['id']] = [ isSetOr($user['id'],0), isSetOr($user['name'],'null',true), "null" ];
           }
           $table["likedby"][] = [
-            $matches[1], $matches[2], 0, $user['id'], isSetOr($user['created_time'],'null',true)];
-            //$matches[1], $matches[2], 0, $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
+            $page_id, $post_id, 0, $user['id'], isSetOr($user['created_time'],'null',true)];
         }
     }
     if(isset($d['ec_comments'])) {
       if(empty($d['ec_comments']['data']))
         continue;
-      preg_match('/([0-9]+)_([0-9]+)\\/comments/', current($d['ec_comments']['paging']),$matches);
       foreach ($d['ec_comments']['data'] as $c) {
         if(isset($c['id'])) {
           $user = $c['from'];
@@ -147,13 +143,13 @@ function parseJsonString($string, &$table = []) {
             $table['fb_user'][$user['id']] = [ isSetOr($user['id'],0), isSetOr($user['name'],'null',true), "null" ];
           }
           $ids=explode('_',$c['id']);
-          $page_id = $ids[0]; $post_id = $ids[1]; $message_id = $ids[2];
+          $message_id = array_pop($ids);
+          $comments[]=$message_id;
           $table["comment"][] = array(
-            array_pop($ids), array_pop($ids), array_pop($ids), isSetOr($user['id']),
+            $message_id, $post_id, $page_id, isSetOr($user['id']),
             isSetOr($c['message'],'null',true),
             (isset($c['can_remove']) ? 1 : 0),
             isSetOr($c['created_time'],'null',true));
-          //"to_timestamp('".  pg_escape_string(isSetOr($c['created_time'])).  "', 'YYYY-MM-DD HH24:MI:SS')"));
 
           // Handle story_tags/message_tags
           foreach(['story_tags', 'message_tags'] as $type) {
@@ -169,9 +165,9 @@ function parseJsonString($string, &$table = []) {
       }
     }
     if(isset($d['ec_likes'])) {
-      if(empty($d['ec_likes']['data']))
+      if(isset($d['ec_likes']['paging']) && empty($d['ec_likes']['data']))
         continue;
-      preg_match('/([0-9]+)_([0-9]+)_([0-9]+)\\/likes/', current($d['ec_likes']['paging']),$matches);
+      $comment_id=array_shift($comments);
       foreach ($d['ec_likes']['data'] as $user)
         if(isset($user['id'])) {
           if( isset($user['category'])) {
@@ -179,9 +175,10 @@ function parseJsonString($string, &$table = []) {
           } else {
             $table['fb_user'][$user['id']] = [ isSetOr($user['id'],0), isSetOr($user['name'],'null',true), "null" ];
           }
+          if(empty($page_id) || empty($post_id) || empty($comment_id)) {
+            throw new Exception('Problem parsing likes on comments, recrawl is suggested.'); }//print_r($comments);print_r($d); exit(PHP_EOL.$page_id.", ".$post_id. ", ". $comment_id.PHP_EOL); }
           $table["likedby"][] = [
-            $matches[1], $matches[2], $matches[3], $user['id'], isSetOr($like['created_time'],'null',true)];
-            //$matches[1], $matches[2], $matches[3], $like['id'], "to_timestamp('".isSetOr($like['created_time'])."', 'YYYY-MM-DD HH24:MI:SS')"));
+            $page_id, $post_id, $comment_id, $user['id'], isSetOr($like['created_time'],'null',true)];
         }
     }
     if(isset($d['ep_shares'], $d['ep_shares']['data'])) {
@@ -225,16 +222,17 @@ function insertToDB($query, $db) {
       foreach ($value as &$line)
         $line = "(".implode(",", $line).")";
       while(count($value)) {
-        #       print count($value).'.';
         $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', array_splice($value,0,25000)).";".PHP_EOL;
-        #     print $sql;
         if(!$db->query($sql)) {
           file_put_contents("error.sql", $sql);
+          //Should we die or just throw an exeption??
           die($db->error);
+          throw new Exception($db->error, E_WARNING);
         }
-  #        throw new Exception($db->error, E_WARNING);
       }
     }
+    if(!$db->commit())
+      die($db->error);
     return;
   }
 
