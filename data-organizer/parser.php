@@ -165,9 +165,11 @@ function parseJsonString($string, &$table = []) {
       }
     }
     if(isset($d['ec_likes'])) {
+      $comment_id=array_shift($comments);
       if(isset($d['ec_likes']['paging']) && empty($d['ec_likes']['data']))
         continue;
-      $comment_id=array_shift($comments);
+      if(isset($d['ec_likes']['id']))
+        $comment_id=substr(strrchr($d['ec_likes']['id'],'_'), 1);
       foreach ($d['ec_likes']['data'] as $user)
         if(isset($user['id'])) {
           if( isset($user['category'])) {
