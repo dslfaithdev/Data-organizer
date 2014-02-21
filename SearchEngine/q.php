@@ -16,6 +16,7 @@ $CONF['sphinx_host'] = 'localhost';
 $CONF['sphinx_port'] = 9312; //this demo uses the SphinxAPI interface
 
 $CONF['mysql_host'] = "localhost";
+$CONF['mysql_port'] = "3306";
 $CONF['mysql_username'] = "sincere-local";
 $CONF['mysql_password'] = "";
 $CONF['mysql_database'] = "sincere";
@@ -23,14 +24,12 @@ $CONF['mysql_database'] = "sincere";
 $CONF['sphinx_index'] = "sincere_post"; // can also be a list of indexes, "main, delta"
 /*
 $CONF['sphinx_attributes'] = array(
-  "story"=>"string",
   "fb_id"=> "numeric",
   "page_id"=> "numeric",
   "likes_count"=> "numeric",
   "comments_count"=> "numeric",
   "entr_ug"=> "numeric",
   "entr_pg"=> "numeric"); // this defines attributes to use for breakdowns, each need defining as string/numeric
-*/
 #can use 'excerpt' to highlight using the query, or 'asis' to show description as is.
 $CONF['body'] = 'excerpt';
 
@@ -125,6 +124,14 @@ if (!empty($q)) {
         else
           $cl->SetSortMode(SPH_SORT_EXTENDED, "@relevance DESC, @id DESC");
 
+        foreach ($CONF['sphinx_attributes'] as $attr => $type) {
+          if (!empty($_GET[$attr])) {
+            if ($type == 'numeric') { //string attributes must go in the fulltext query and we are not supporting this
+              $cl->setFilter($attr,array(intval($_GET[$attr])));
+            }
+          }
+        }
+        //$cl->setFilter("page_id", array(intval("184749301592842")));
         //plain text search
         $res = $cl->Query($q, $CONF['sphinx_index']);
         /*
@@ -237,7 +244,7 @@ if (!empty($q)) {
     if (!empty($ids)) {
 
         //Setup Database Connection
-        $db = mysqli_connect($CONF['mysql_host'],$CONF['mysql_username'],$CONF['mysql_password'], $CONF['mysql_database']) or die("ERROR: unable to connect to database");
+        $db = mysqli_connect($CONF['mysql_host'],$CONF['mysql_username'],$CONF['mysql_password'], $CONF['mysql_database'], $CONF['mysql_port']) or die("ERROR: unable to connect to database");
 
 
         // Fer json return

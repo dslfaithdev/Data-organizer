@@ -4,8 +4,9 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
     <title>SINCERE: Social Interactive Networking and Conversation Entropy Ranking Engine</title>
-
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'/>
     <link type="text/css" href="css/main_style.css" rel="stylesheet" />
+    <link rel="stylesheet" href="color/farbtastic.css" type="text/css" />
   </head>
 
   <body>
@@ -25,8 +26,15 @@
             <span id="tip_icon" title="Tip: How to use"><img style="width:25px;height:25px;" src="image/Tango-icon-tip.png" /></span>
           </span>
         </div>
-        <div style="margin-top:10px;">
+<div style="margin-top:10px;">
           <span style="display:inline-block; padding-right:15px;">
+          Page
+            <select id="page_limit" name="page">
+              <option value="">ALL</option>
+              <option value="294421993905616">OccupyTogether</option>
+              <option value="184749301592842">OccupyWallstreet</option>
+            </select>
+          <span style="display:inline-block; padding-left:15px; padding-right:15px; border-left: 1px #C2C2C2 solid;">
             Include
             <select id="search_type" name="boolean">
               <option selected="selected">ANY</option>
@@ -47,16 +55,21 @@
               <option value="comments">Comments</option>
             </select>
           </span>
-
+          <span style="display: none;">
           <span style="display:inline-block; padding-left:15px; padding-right:15px; border-left: 1px #C2C2C2 solid;">
             Return top
             <input id="total_results" name="total_results" type="text" value="25" size="3" disabled="disabled"/> results
           </span>
+          </span>
+          <div style="display: none;">  
+            <div id="bias_color" style="float:left;width:200px;"></div><div id="delib_color" style=" margin-left: 200px; "></div>
+            Bias color: <input value="#43f96e" class="userMode_-1"/>
+            Delib color: <input value="#42adff" class="userMode_1"/></div>
         </div>
         <div id="tip_content" style="display: none;">Enter a keyword, several keywords, or a keyword phrase in quotes and select search type.</div>
 
-        <div id="results">
-        </div>
+        <div id="results"> </div>
+        <div style="clear: both;">&nbsp;</div>
       </div>
     </div>
 
@@ -64,6 +77,7 @@
     <script type="text/javascript" src="js/json2.min.js"></script>
     <script type="text/javascript" src="js/jquery.parsequery.min.js"></script>
     <script type="text/javascript" src="js/comments.js"></script>
+    <script type="text/javascript" src="color/farbtastic.js"></script>
     <script type="text/javascript">
       var messageMap = new Array();
       var pageNum;
@@ -76,8 +90,10 @@
         var orderBy = $("#ranking").val();
         if(orderBy != "")
           orderBy="&orderBy="+orderBy;
-        var url = "//" + location.hostname + "/q.php?q=" + encodeURIComponent(keyword) + orderBy + "&page="+page;
-        window.location.hash = "q=" + keyword + orderBy;
+        var url = "//" + location.hostname + "/q.php?q=" + encodeURI(keyword + orderBy + "&page="+page);
+        window.location.hash = "q=" + encodeURI(keyword + orderBy);
+        if ($("#page_limit").val())
+          url += "&page_id="+$("#page_limit").val();
         if (page == 1)
           messageMap.length = 0;
         //Disable the search button, show loader.
@@ -86,18 +102,24 @@
         var append = (page == 1) ? false : true;
         pageNum = page + 1;
         $.get(url, function(data) {
-          searchResult(data, append);
-        },"json"
-        ).complete( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");}); 
+          if(data)
+            searchResult(data, append);
+          else
+            doSearch(keyword, page);
+        },"json")
+        .fail( function() {console.log(url+" error"); doSearch(keyword, page);})
+        .always( function () {$("#search_box").css("background", ""); $("#search_btn").removeAttr("disabled");}); 
       }
 
       function searchResult(data, append) {
+        disableScroll = true;
         if(!append)
           $('#results').empty();
-        disableScroll = false;
         var results = data['results'];
         //      objs = data;
 
+        if(append && results.length == 0)
+          return;
         if($('#result_main').css('display') == 'none')
           $('#result_main').css('display', 'block');
 
@@ -136,14 +158,18 @@
             '</div>'
           );
           $('#results').append(obj);
-
         }
+        if((((pageNum-1)*25)+data['status']['matches']) >= data['status']['total']) {
+          console.log("last page");
+        } else
+          disableScroll = false;
       }
 
       $(function(){
+        $('#bias_color').farbtastic('.userMode_-1');$('#delib_color').farbtastic('.userMode_1');
 
         /* Parse hash */
-        var h = $.parseQuery(window.location.hash.substring(1));
+        var h = $.parseQuery(decodeURI(window.location.hash.substring(1)));
         if(h.orderBy !== undefined) {
           $('#ranking').val(h.orderBy);
         }
@@ -192,8 +218,10 @@
                 element.css('display','block').html(message);
                 $(target).css('background-position-x', '-9px');
                 parent.find(".comments").show();
-                if(messageMap[pid]['comments'] > 0 && parent.find(".comments").attr('done') != 1) {
-                  parent.find(".comments").attr('done',1);
+                if(messageMap[pid]['comments'] > 0
+                    && parent.find(".comments").attr('status') != 'loading'
+                    && parent.find(".comments").attr('status') != 'done') {
+                  parent.find(".comments").attr('status','loading');
                   $("#"+pageid + "_"+pid+">.comments").html('<div id="' + pageid + "_" + pid + '_waiting" class="waiting">Analyzing comments, please wait...</div>');
                   GetOpinionsInComments(pageid, pid, 2);
                 }
@@ -245,6 +273,49 @@ $.fn.doLinks = function(){
     $(this).html(linkify($(this).html()));
   });
 }
+
+function pageDelib(userList) {
+  //userList = ' {"Bias":[ 1140153280, 100002988813528, 100001565006736, 100000403640024, 100002207002605, 1543735750, 1366838071, 641316629, 631650176, 508344985, 639976758, 100000071575196, 100000254314629, 100000409532416, 1664659690], "Deliberation":[ 100002135796868, 1283578506, 208115509223180, 698675914, 100000281994815, 135188709920622, 541353848, 1796097322, 1298858058, 100002279155105, 100000396581051, 1233695230, 100000602055906, 1607928306, 631786909]}';
+//  userList = JSON.parse(json);
+  var str = ""; var i=1;
+  for (type in userList) {
+    //Create div to place first type.
+    str += '<div id="'+type+'" class="comment_group '+type+'"';
+    (Object.keys(userList).length >= i++) ? str+='style="width:'+100/Object.keys(userList).length+'%; float: left">' : str+='">';
+    str += '<span class="type_head">'+type+'</span>';
+    for (i in userList[type]) {
+    str += '<div id="'+i+'" class="comment_item" style="border: 0px !important; margin-bottom: 20px;">'
+      + '<img style="float: left; " class="blur" src="http://graph.facebook.com/'
+      + i+'/picture?redirect=1&height=100&width=100" width="100" height="100"/>';
+    str += '<div id="name_'
+      + i+'" class="name_link">'
+      + '<a href=""">' + userList[type][i]['name'] + '</a></div>'
+      + '<div style="height: 150px;overflow: auto;">';
+    for (cid in userList[type][i]['comments']) {
+      str += '<div class="user_comment">'
+        + userList[type][i]['comments'][cid]['message']
+        + '</div>';
+    }
+//    str += 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut nibh sed augue tincidunt volutpat. Sed hendrerit pharetra vulputate. Aliquam mollis elit id ante rutrum, a commodo neque sagittis. Sed sit amet ante id metus scelerisque laoreet eu pulvinar elit. Aenean porttitor tempus nunc eget rhoncus. Nullam condimentum ornare mauris, eu blandit felis volutpat vel. Aliquam sit amet consectetur magna. Curabitur lacinia fermentum porttitor. Vestibulum odio dui, aliquam eget interdum at, ultrices nec urna. Mauris in placerat nibh. Phasellus scelerisque risus id fringilla blandit. Quisque fringilla orci a ante dictum pellentesque.';
+    str += '</div>';
+    str += '</div>';
+    }
+    str += '</div>';
+  }
+  $('#results').html(str);
+}
+$(function(){
+    $.ajaxSetup({timeout: 60000});
+    $('#page_limit').change(function () {
+      if(!$(this).val()) {
+        $('#results').empty();
+        return;
+      }
+    $.getJSON( "delib.php?pageId="+$(this).val())
+      .done(function( json ) {pageDelib(json);});
+      console.log($(this).val());});
+
+    });
     </script>	
   </body>
 </html>

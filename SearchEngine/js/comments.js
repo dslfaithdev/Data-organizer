@@ -8,43 +8,47 @@ function GetOpinionsInComments(pageId, postId, numOpinions) {
 
   $.get(url, function(data) {
     ShowCommentOpinions(data);
-  }, "json");
+  }, "json")
+    .fail(function() {
+      $('#'+pageId+'_'+postId+'>.comments').html("Error loading comments.").attr("status","error"); });
 }
 
 function ShowCommentOpinions(data) {
-  if(data['comments'].length < 1) {
+  var parentid = data['status']['id'];
+  var jQueryParentId = '#'+ data['status']['id'];
+  var placeholder = $('#'+parentid+'>.comments');
+  placeholder.html("");
+  if(data['status']['message'] != "Ok") {
+    placeholder.html(data['status']['message']);
+    placeholder.attr("status","error");
     return;
   }
-  var parentid;
-  for(key in data['comments'][0]) {
-    parentid = data['comments'][0][key]['d']['page_id'] + "_" + data['comments'][0][key]['d']['post_id'];
-    break;
-  }
-  var jQueryParentId = "#" + parentid;
-  $(jQueryParentId + ">.comments").html("");
-  $(jQueryParentId + ">.comments").attr("done",1);
+  placeholder.attr("status","done");
   for (var i =0; i < data['comments'].length; i++) {
-    var comments = new Array();
-    var count = 0;
-    for (key in data['comments'][i]) {
-      comments.push(data['comments'][i][key]['d']);
-      comments[count]['ranking'] = data['comments'][i][key]['ranking'];
-      count += 1;
-    }
-    var comments = comments.sort(sort_by('ranking', true, parseInt));
+    var comments = data['comments'][i].sort(sort_by('timestamp', true, parseInt));
     $("<div/>", {
       id: "comment_group_" + parentid + "_" + i,
-      class: "comment_group_" + i
-    }).appendTo(jQueryParentId+">.comments");
-    var comment_group_div = "#comment_group_" + parentid + "_" + i;
-    for (var j = 0; j < comments.length; j++) {
+      class: "comment_group comment_group_" + i
+    }).appendTo(placeholder);
+    comments.forEach(function(comment) {/*
       $("<div/>", {
-        id: "comment_" + j,
-        class: "comment_group_item_" + i,
-        text: comments[j]['message']
-      }).appendTo(comment_group_div);
-    }
+        id: "comment_" + comment['id'],
+        class: "comment_item comment_group_item_" + i + " userMode_" + comment['user_mode'],
+        text: new Date(comment['timestamp']*1000).toLocaleString() + " " + comment['message']
+      }).appendTo("#comment_group_" + parentid + "_" + i);*/
+    var str = "<div id=\"comment_" + comment['id'] +"\"" +
+      "class=\"comment_item comment_group_item_" + i+ " userMode_" + comment['user_mode'] + "\">" +
+      '<img style="float: left; " class="blur commment_img" src="http://graph.facebook.com/'+
+      comment['fb_id']+'/picture" width="50" height="50"/>' +
+      "<div class=\"name_link\"><a href=\"http://facebook.com/"+comment['fb_id']+"\">" + comment['name'] + "</a></div>" +
+      comment['message'] +
+      "<div class=\"date\"><a href=\"http://facebook.com/" + comment['page_id'] + "/posts/" + comment['post_id'] + "?comment_id=" + comment['id'] + "\">" +
+      new Date(comment['timestamp']*1000).toLocaleString() +
+      "</a></div></div>";
+    $("#comment_group_" + parentid + "_" + i).append(str);
+    });
   }
+  $.farbtastic('#bias_color').linkTo('.userMode_-1');$.farbtastic('#delib_color').linkTo('.userMode_1');
 }
 
 // Here's a more flexible version, which allows you to create
@@ -59,3 +63,10 @@ function sort_by(field, reverse, primer){
        return (A < B ? -1 : (A > B ? 1 : 0)) * [1,-1][+!!reverse];
    }
 }
+
+function invert(rgb) {
+      rgb = [].slice.call(arguments).join(",").replace(/rgb\(|\)|rgba\(|\)|\s/gi, '').split(',');
+          for (var i = 0; i < rgb.length; i++) rgb[i] = (i === 3 ? 1 : 255) - rgb[i];
+              return rgb.join(", ");
+}
+
