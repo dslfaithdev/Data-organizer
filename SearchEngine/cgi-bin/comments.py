@@ -161,45 +161,50 @@ if(os.path.isfile('../lists/'+ str(pageID)+'.json')):
   influence = json.loads(open('../lists/'+str(pageID)+'.json', 'r').read())
 
 #Our result array.
-result=[[]]
+result=[]
+addedComments = []
 #Enumerate over our groups.
 for (i, group) in enumerate([OneGroup, AnotherGroup]):
-    if len(group) is 0:
-        sql="SELECT message, fb_id, name, page_id, post_id, comment.id AS id, UNIX_TIMESTAMP(created_time) as timestamp FROM comment, fb_user WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID) + " AND comment.fb_id=fb_user.id"
-        cur.execute(sql)
-        for row in cur.fetchall():
-            #row['user_mode'] = randint(-1,1);
-            if row['fb_id'] in influence['Bias']:
-              row['user_mode'] = -1
-            elif row['fb_id'] in influence['Deliberation']:
-              row['user_mode'] = 1
-            else:
-              row['user_mode'] = 0
-            row['ranking'] = -1
-            result[0].append(row)
-        break
-    if i is 1:
-        result.append([])
-    inList=""
-    for keys in group.keys():
-        inList += "%d, " % keys
-
-    sql="SELECT message, fb_id, name, page_id, post_id, comment.id AS id, UNIX_TIMESTAMP(created_time) as timestamp FROM comment, fb_user WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID)+" AND fb_id IN ("+inList[0:-2]+")" + " AND comment.fb_id=fb_user.id"# ORDER BY created_time desc;"
-    try:
-      cur.execute(sql)
-    except:
-      print('\nMysql error')
-      sys.exit(1)
+  result.append([])
+  if len(group) is 0:
+    sql="SELECT message, fb_id, name, page_id, post_id, comment.id AS id, UNIX_TIMESTAMP(created_time) as timestamp FROM comment, fb_user WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID) + " AND comment.fb_id=fb_user.id"
+    cur.execute(sql)
     for row in cur.fetchall():
-        #row['user_mode'] = randint(-1,1);
-        if row['fb_id'] in influence['Bias']:
-          row['user_mode'] = -1
-        elif row['fb_id'] in influence['Deliberation']:
-          row['user_mode'] = 1
-        else:
-          row['user_mode'] = 0
-        row['ranking'] = group[row['fb_id']]
-        result[i].append(row)
+      if row['id'] in addedComments:
+        continue
+      addedComments.append(row['id'])
+      if row['fb_id'] in influence['Bias']:
+        row['user_mode'] = -1
+      elif row['fb_id'] in influence['Deliberation']:
+        row['user_mode'] = 1
+      else:
+        row['user_mode'] = 0
+      row['ranking'] = -1
+      result[0].append(row)
+    break
+  inList=""
+  for keys in group.keys():
+    inList += "%d, " % keys
+
+  sql="SELECT message, fb_id, name, page_id, post_id, comment.id AS id, UNIX_TIMESTAMP(created_time) as timestamp FROM comment, fb_user WHERE page_id="+con.escape_string(pageID)+" AND post_id="+con.escape_string(postID)+" AND fb_id IN ("+inList[0:-2]+")" + " AND comment.fb_id=fb_user.id"# ORDER BY created_time desc;"
+  #print >> sys.stderr, sql
+  try:
+    cur.execute(sql)
+  except:
+    print('\nMysql error')
+    sys.exit(1)
+  for row in cur.fetchall():
+    if row['id'] in addedComments:
+      continue
+    addedComments.append(row['id'])
+    if row['fb_id'] in influence['Bias']:
+      row['user_mode'] = -1
+    elif row['fb_id'] in influence['Deliberation']:
+      row['user_mode'] = 1
+    else:
+      row['user_mode'] = 0
+    row['ranking'] = group[row['fb_id']]
+    result[i].append(row)
 
 #Remove duplicates
 #result = list(set(result))
