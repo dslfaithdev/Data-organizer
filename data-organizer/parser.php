@@ -1,5 +1,4 @@
 <?
-ini_set('memory_limit', '512M');
 
 function exception_error_handler($errno, $errstr, $errfile, $errline ) {
     throw new ErrorException($errstr, $errno, 0, $errfile, $errline);
@@ -7,6 +6,7 @@ function exception_error_handler($errno, $errstr, $errfile, $errline ) {
 set_error_handler("exception_error_handler");
 
 function parseJsonString($string, &$table = []) {
+  $likes=0; $cs=0; $shares=0;
   $comments = array();
   $data = preg_split("/(\r\n|\n)/", $string);
   //Parse the first row as a post(message).
@@ -129,6 +129,7 @@ function parseJsonString($string, &$table = []) {
           }
           $table["likedby"][] = [
             $page_id, $post_id, 0, $user['id'], isSetOr($user['created_time'],'null',true)];
+          $likes++;
         }
     }
     if(isset($d['ec_comments'])) {
@@ -150,6 +151,7 @@ function parseJsonString($string, &$table = []) {
             isSetOr($c['message'],'null',true),
             (isset($c['can_remove']) ? 1 : 0),
             isSetOr($c['created_time'],'null',true));
+          $cs++;
 
           // Handle story_tags/message_tags
           foreach(['story_tags', 'message_tags'] as $type) {
@@ -194,11 +196,17 @@ function parseJsonString($string, &$table = []) {
           }
           $table['shares'][] =  [ strstr($share['id'],'_',true), $post_id, isSetOr($user['id'],0),
             isSetOr($share['updated_time'],'0000-00-00 00:00:00',true), isSetOr($like['created_time'],'0000-00-00 00:00:00',true) ];
+          $shares++;
         }
       }
     }
   }
-
+  if($table["post"][$page_id."_".$post_id][15] === "null")
+    $table["post"][$page_id."_".$post_id][15] = $shares;
+  if($table["post"][$page_id."_".$post_id][16] === "null")
+    $table["post"][$page_id."_".$post_id][16] = $likes;
+  if($table["post"][$page_id."_".$post_id][17] === "null")
+    $table["post"][$page_id."_".$post_id][17] = $cs;
   return $table;
 }
 function createInserts($filePrefix, $array, $db) {
@@ -206,35 +214,36 @@ function createInserts($filePrefix, $array, $db) {
     $f = fopen($filePrefix.".".$key.".sql", "a");
     if($f === FALSE)
       return "error opening ".$filePrefix.".".$key.".sql".PHP_EOL;
-    foreach ($value as &$line)
-      $line = "(".implode(",", $line).")";
-
-    $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', $value).";".PHP_EOL;
-
-    fwrite($f, $sql);
+    $arr = array_chunk($value, 250000);
+    unset($value);
+    foreach($arr as $v) {
+      foreach ($v as &$line)
+        $line = "(".implode(",", $line).")";
+      //$sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', $v ).";".PHP_EOL;
+      $sql = "REPLACE INTO ".$key." VALUES ".implode(',', $v).";".PHP_EOL;
+      fwrite($f, $sql);
+    }
     fclose($f);
   }
 }
 
 function insertToDB($query, $db) {
   if(DB == "mysql") {
-    if(!$db->autocommit(FALSE))
-      die($db->error);
     foreach($query as $key => $value){
-      foreach ($value as &$line)
-        $line = "(".implode(",", $line).")";
-      while(count($value)) {
-        $sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', array_splice($value,0,25000)).";".PHP_EOL;
-        if(!$db->query($sql)) {
-          file_put_contents("error.sql", $sql);
-          //Should we die or just throw an exeption??
-          die($db->error);
+      $arr = array_chunk($value, 250000);
+      unset($value);
+      foreach($arr as $v) {
+        foreach ($v as &$line) {
+          $line = "(".implode(",", $line).")";
+        }
+        //$sql = "INSERT IGNORE INTO ".$key." VALUES ".implode(',', $v ).";".PHP_EOL;
+        $sql = "REPLACE INTO ".$key." VALUES ".implode(',', $v).";".PHP_EOL;
+        if(!$db->real_query($sql)) {
+          //file_put_contents("db-error.sql", $db->err);
           throw new Exception($db->error, E_WARNING);
         }
       }
     }
-    if(!$db->commit())
-      die($db->error);
     return;
   }
 

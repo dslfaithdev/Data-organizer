@@ -1,8 +1,10 @@
--- MySQL dump 10.13  Distrib 5.5.30, for FreeBSD9.0 (amd64)
+-- mysqldump --no-data sincere
+
+-- MySQL dump 10.13  Distrib 5.5.35, for FreeBSD10.0 (amd64)
 --
 -- Host: 194.47.148.113    Database: sincere
 -- ------------------------------------------------------
--- Server version	5.5.30-MariaDB-log
+-- Server version	5.5.36-tokudb-7.1.5-MariaDB-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -27,7 +29,7 @@ CREATE TABLE `application` (
   `name` varchar(256) DEFAULT NULL,
   `namespace` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -48,7 +50,7 @@ CREATE TABLE `comment` (
   PRIMARY KEY (`page_id`,`post_id`,`id`),
   KEY `comment_id` (`id`),
   KEY `fb_id` (`fb_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -63,7 +65,7 @@ CREATE TABLE `crawl_stat` (
   `name` text CHARACTER SET utf8,
   `max(post.created_time)` timestamp NULL DEFAULT NULL,
   `entropy` float DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=TokuDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -78,7 +80,7 @@ CREATE TABLE `fb_user` (
   `name` text,
   `category` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -96,7 +98,7 @@ CREATE TABLE `likedby` (
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`page_id`,`post_id`,`comment_id`,`fb_id`),
   KEY `fb_id` (`fb_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -116,7 +118,7 @@ CREATE TABLE `message_tags` (
   `type` varchar(256) DEFAULT NULL,
   `name` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -132,7 +134,7 @@ CREATE TABLE `page` (
   `category` text,
   PRIMARY KEY (`id`),
   KEY `page_id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -148,7 +150,7 @@ CREATE TABLE `place` (
   `loc_latitude` float DEFAULT NULL,
   `loc_longitude` float DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -190,7 +192,7 @@ CREATE TABLE `post` (
   KEY `created_time_index` (`created_time`),
   KEY `comments_count_index` (`comments_count`),
   KEY `from_id_index` (`from_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -207,7 +209,7 @@ CREATE TABLE `shares` (
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `updated_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`id`,`post_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -242,7 +244,7 @@ CREATE TABLE `story_tags` (
   `type` varchar(256) DEFAULT NULL,
   `name` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -257,7 +259,7 @@ CREATE TABLE `with_tags` (
   `post_id` bigint(20) NOT NULL DEFAULT '0',
   `fb_id` bigint(20) NOT NULL DEFAULT '0',
   PRIMARY KEY (`page_id`,`post_id`,`fb_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -288,4 +290,4 @@ CREATE TABLE `with_tags` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2013-07-18 20:35:16
+-- Dump completed on 2014-04-01  8:54:34
