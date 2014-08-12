@@ -222,6 +222,7 @@ body{
   padding: 1px;
   margin-bottom: 2px;
   border: 1px solid darkgrey;
+  word-wrap: break-word;
 }
 
 .comment_group_item_0 {
@@ -244,10 +245,14 @@ body{
   font-size: 13px;
   font-family: 'lucida grande',tahoma,verdana,arial,sans-serif;
   clear: both;
+  /* make it blurry */
   text-shadow: 0 0 5px #3B5998;
   color: rgba(255, 255, 255, 0) !important;
   cursor: pointer;
   text-decoration: none;
+  /* make it prinable in chrome */
+  -webkit-print-color-adjust:exact;
+  -webkit-filter:opacity(1);
   /*font: \'lucida grande\',tahoma,verdana,arial,sans-serif;*/
 }
 
