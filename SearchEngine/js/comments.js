@@ -7,13 +7,19 @@ function GetOpinionsInComments(pageId, postId, numOpinions) {
             "&numOpinions=" + numOpinions;
 
   $.get(url, function(data) {
-    ShowCommentOpinions(data);
+    ShowCommentOpinions(data, pageId + '_' + postId);
   }, "json")
     .fail(function() {
       $('#'+pageId+'_'+postId+'>.comments').html("Error loading comments.").attr("status","error"); });
 }
 
-function ShowCommentOpinions(data) {
+function ShowCommentOpinions(data, parentid) {
+  if(data === null) {
+    var placeholder = $('#'+parentid+'>.comments');
+    placeholder.html('Internal server error');
+    placeholder.attr("status","error");
+    return;
+  }
   var parentid = data['status']['id'];
   var jQueryParentId = '#'+ data['status']['id'];
   var placeholder = $('#'+parentid+'>.comments');
@@ -41,7 +47,7 @@ function ShowCommentOpinions(data) {
       '<img style="float: left; " class="blur commment_img" src="http://graph.facebook.com/'+
       comment['fb_id']+'/picture" width="50" height="50"/>' +
       "<div class=\"name_link\"><a href=\"http://facebook.com/"+comment['fb_id']+"\">" + comment['name'] + "</a></div>" +
-      comment['message'] +
+      linkify(comment['message']) +
       "<div class=\"date\"><a href=\"http://facebook.com/" + comment['page_id'] + "/posts/" + comment['post_id'] + "?comment_id=" + comment['id'] + "\">" +
       new Date(comment['timestamp']*1000).toLocaleString() +
       "</a></div></div>";

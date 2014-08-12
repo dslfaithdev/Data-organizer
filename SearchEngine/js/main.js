@@ -26,12 +26,11 @@ function doSearch(keyword, page, retries){
   $.get(url, function(data) {
     if(data)
       searchResult(data, append);
-    else
-      doSearch(keyword, page);
   },"json")
-  .fail( function() {
-    console.log(url+" error");
-    setTimeout(function(){doSearch(keyword, page, ++retries);}, 100);
+    .fail( function(data) {
+    console.log(url+" error: "+data.statusText);
+    if( data.status != 200)
+      setTimeout(function(){doSearch(keyword, page, ++retries);}, 100);
   }).always( function () {
     $("#search_box").css("background", "");
     $("#search_btn").removeAttr("disabled");
@@ -220,7 +219,7 @@ function pageDelib(userList) {
       + '<div style="height: 150px;overflow: auto;">';
       for (cid in userList[type][i]['comments']) {
         str += '<div class="user_comment">'
-        + userList[type][i]['comments'][cid]['message']
+        + linkify(userList[type][i]['comments'][cid]['message'])
         + '</div>';
       }
       //    str += 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ut nibh sed augue tincidunt volutpat. Sed hendrerit pharetra vulputate. Aliquam mollis elit id ante rutrum, a commodo neque sagittis. Sed sit amet ante id metus scelerisque laoreet eu pulvinar elit. Aenean porttitor tempus nunc eget rhoncus. Nullam condimentum ornare mauris, eu blandit felis volutpat vel. Aliquam sit amet consectetur magna. Curabitur lacinia fermentum porttitor. Vestibulum odio dui, aliquam eget interdum at, ultrices nec urna. Mauris in placerat nibh. Phasellus scelerisque risus id fringilla blandit. Quisque fringilla orci a ante dictum pellentesque.';

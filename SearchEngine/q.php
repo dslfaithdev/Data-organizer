@@ -170,6 +170,8 @@ if (!empty($ids)) {
 
   //Run the Mysql Query
   $sql = str_replace('$ids',implode(',',$ids),'SELECT page.id AS page_id, message,post.id as  post_id, created_time as createdtime,
+    (SELECT count(*) FROM likedby AS ls WHERE ls.page_id=post.page_id AND ls.post_id=post.id AND ls.comment_id=0) as likes_count,
+    (SELECT COUNT(*) FROM comment co WHERE co.page_id=post.page_id AND co.post_id=post.id) as comments_count,
     likes_count as likes, shares_count as shares, comments_count as comments, entr_ug as u_entropy,
     entr_pg as p_entropy, page.name AS \'group\', picture FROM post LEFT OUTER JOIN page ON (post.page_id=page.id) WHERE post.id in ($ids) ');
   $result = mysqli_query($db, $sql);
