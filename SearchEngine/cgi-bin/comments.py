@@ -51,13 +51,19 @@ def cluster_points(L):
     H = np.array([edict[k] for k in evals[startfrom:startfrom + 2]])
     Y = H.transpose()
     warnings.simplefilter('ignore', UserWarning)
-    returnIdx = map(int, kmeans2(Y, 2, iter=10,minit='random')[1])
+    rIdx = kmeans2(Y, 2, iter=10, minit='random')[1]
+    returnIdx = []
+    for i in range(0, len(rIdx)):
+        returnIdx.append(int(rIdx[i]))
     mod = gr.modularity(returnIdx)
-    for w in range(0,200):
-        idx = map(int, kmeans2(Y, 2, iter=10,minit='random')[1])
-        if(gr.modularity(idx) > mod):
-            mod = gr.modularity(idx)
-            returnIdx = idx
+    for w in range(0, 200):
+        idx = kmeans2(Y, 2, iter=10, minit='random')[1]
+        newMod = gr.modularity(idx)
+        if newMod > mod:
+            mod = newMod
+            returnIdx = []
+            for i in range(0, len(rIdx)):
+                returnIdx.append(int(rIdx[i]))
     return mod, returnIdx
 
 #-----------------------------------------------------------------------------
