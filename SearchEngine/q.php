@@ -15,9 +15,10 @@ $CONF = array();
 $CONF['sphinx_host'] = 'localhost';
 $CONF['sphinx_port'] = 9312; //this demo uses the SphinxAPI interface
 
-$CONF['mysql_host'] = "localhost";
-$CONF['mysql_username'] = "sincere-local";
-$CONF['mysql_password'] = "";
+$CONF['mysql_host'] = "194.47.148.113";
+$CONF['mysql_port'] = "3307";
+$CONF['mysql_username'] = "sincere";
+$CONF['mysql_password'] = "sincerePass";
 $CONF['mysql_database'] = "sincere";
 
 $CONF['sphinx_index'] = "sincere_post"; // can also be a list of indexes, "main, delta"
@@ -55,7 +56,7 @@ WHERE id IN ($ids)
 
 #might need to put in path to your file
 #if (!empty($_GET['q']))
-  require("/usr/local/share/examples/sphinxsearch/api/sphinxapi.php");
+  require("sphinxapi.php");
 
 
 //Sanitise the input
@@ -237,7 +238,7 @@ if (!empty($q)) {
     if (!empty($ids)) {
 
         //Setup Database Connection
-        $db = mysqli_connect($CONF['mysql_host'],$CONF['mysql_username'],$CONF['mysql_password'], $CONF['mysql_database']) or die("ERROR: unable to connect to database");
+        $db = mysqli_connect($CONF['mysql_host'],$CONF['mysql_username'],$CONF['mysql_password'], $CONF['mysql_database'], $CONF['mysql_port']) or die("ERROR: unable to connect to database");
 
 
         // Fer json return

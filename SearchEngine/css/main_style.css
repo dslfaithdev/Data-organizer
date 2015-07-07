@@ -23,10 +23,10 @@ body{
 #header{
 	/*height: 100px;*/
 	padding-top: 10px;
-	background: #140D6B; /* #E3E9F7;*/
+/*	background: #140D6B; /* #E3E9F7;*/
 	position: relative;
 	border-bottom: 1px solid #958FD6;
-	color: white;
+	color: darkgrey;
 	padding: 10px 30px;
 	height:100px;
 /*	border-top-left-radius: 15px;
@@ -190,7 +190,7 @@ body{
   margin-right: 20px;
 }
 .comments {
-  padding: 20px;
+  /*padding: 20px;*/
 }
 
 .comment_group_1 {
