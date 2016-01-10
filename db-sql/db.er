@@ -1,0 +1,120 @@
+[comment]
+    *id {label:"BIGINT"}
+    *post_id {label:"BIGINT"}
+    *page_id {label:"BIGINT"}
+    fb_id {label:"BIGINT"}
+    message {label:"TEXT"}
+    can_remove {label:"INTEGER"}
+    created_time {label:"TIMESTAMP"}
+[crawl_stat]
+    page_id {label:"BIGINT"}
+    name {label:"TEXT"}
+    max(post.created_time) {label:"TIMESTAMP"}
+    entropy {label:"FLOAT"}
+[message_tags]
+    *id {label:"BIGINT"}
+    page_id {label:"BIGINT"}
+    post_id {label:"BIGINT"}
+    comment_id {label:"BIGINT"}
+    offset {label:"INTEGER"}
+    length {label:"INTEGER"}
+    type {label:"VARCHAR(256)"}
+    name {label:"VARCHAR(256)"}
+[fb_user]
+    *id {label:"BIGINT"}
+    name {label:"TEXT"}
+    category {label:"NUMERIC"}
+[with_tags]
+    *page_id {label:"BIGINT"}
+    *post_id {label:"BIGINT"}
+    *fb_id {label:"BIGINT"}
+[status]
+    Table Name {label:"INTEGER"}
+    # Rows {label:"INTEGER"}
+    Total Size MB {label:"INTEGER"}
+[shares]
+    *id {label:"BIGINT"}
+    *post_id {label:"BIGINT"}
+    who {label:"BIGINT"}
+    created_time {label:"TIMESTAMP"}
+    updated_time {label:"TIMESTAMP"}
+[application]
+    *id {label:"BIGINT"}
+    name {label:"VARCHAR(256)"}
+    namespace {label:"VARCHAR(256)"}
+[place]
+    *id {label:"BIGINT"}
+    name {label:"VARCHAR(256)"}
+    loc_latitude {label:"FLOAT"}
+    loc_longitude {label:"FLOAT"}
+[story_tags]
+    *id {label:"BIGINT"}
+    page_id {label:"BIGINT"}
+    post_id {label:"BIGINT"}
+    comment_id {label:"BIGINT"}
+    offset {label:"INTEGER"}
+    length {label:"INTEGER"}
+    type {label:"VARCHAR(256)"}
+    name {label:"VARCHAR(256)"}
+[post]
+    *id {label:"BIGINT"}
+    *page_id {label:"BIGINT"}
+    from_id {label:"BIGINT"}
+    message {label:"TEXT"}
+    type {label:"VARCHAR(256)"}
+    picture {label:"VARCHAR(256)"}
+    story {label:"TEXT"}
+    link {label:"TEXT"}
+    link_name {label:"TEXT"}
+    link_description {label:"TEXT"}
+    link_caption {label:"TEXT"}
+    icon {label:"VARCHAR(256)"}
+    created_time {label:"TIMESTAMP"}
+    updated_time {label:"TIMESTAMP"}
+    can_remove {label:"INTEGER"}
+    shares_count {label:"INTEGER"}
+    likes_count {label:"INTEGER"}
+    comments_count {label:"INTEGER"}
+    entr_pg {label:"FLOAT"}
+    entr_ug {label:"FLOAT"}
+    object_id {label:"VARCHAR(40)"}
+    status_type {label:"VARCHAR(256)"}
+    source {label:"VARCHAR(256)"}
+    is_hidden {label:"INTEGER"}
+    application_id {label:"BIGINT"}
+    place_id {label:"BIGINT"}
+[likedby]
+    *page_id {label:"BIGINT"}
+    *post_id {label:"BIGINT"}
+    *comment_id {label:"BIGINT"}
+    *fb_id {label:"BIGINT"}
+    created_time {label:"TIMESTAMP"}
+[page]
+    *id {label:"BIGINT"}
+    name {label:"TEXT"}
+    category {label:"TEXT"}
+
+page *--1 post
+page *--1 comment
+page *--1 story_tags
+page *--1 with_tags
+comment *--1 post
+fb_user *--1 comment
+fb_user *--1 post
+fb_user *--1 likedby
+post *--1 message_tags
+post *--1 with_tags
+post *--1 application
+story_tags 1--* post
+post *--1 place
+shares *--1 post
+shares 1--* fb_user
+with_tags 1--* fb_user
+likedby *--? comment
+message_tags ?--* comment
+message_tags 1--* page
+likedby *--1 page
+likedby *--1 post
+
+
+
