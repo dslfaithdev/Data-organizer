@@ -30,6 +30,31 @@ CREATE TABLE `application` (
 ) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+
+--
+-- Table structure for table `reply`
+--
+
+DROP TABLE IF EXISTS `reply`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `reply` (
+  `id` bigint(20) NOT NULL DEFAULT '0',
+  `post_id` bigint(20) NOT NULL DEFAULT '0',
+  `page_id` bigint(20) NOT NULL DEFAULT '0',
+  `parent_id` bigint(20) NOT NULL DEFAULT '0',
+  `fb_id` bigint(20) DEFAULT NULL,
+  `message` text,
+  `can_remove` tinyint(1) DEFAULT NULL,
+  `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  PRIMARY KEY (`page_id`,`post_id`,`id`),
+  KEY `comment_id` (`id`),
+  KEY `parent_id` (`id`),
+  KEY `fb_id` (`fb_id`),
+  KEY `created_timeIDX` (`created_time`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 --
 -- Table structure for table `comment`
 --
@@ -100,6 +125,25 @@ CREATE TABLE `fb_user` (
   `category` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `reaction`
+--
+
+DROP TABLE IF EXISTS `reaction`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `reaction` (
+  `page_id` bigint(20) NOT NULL,
+  `post_id` bigint(20) NOT NULL,
+  `comment_id` bigint(20) NOT NULL DEFAULT '0',
+  `fb_id` bigint(20) NOT NULL,
+  `type` enum('NONE', 'LIKE', 'LOVE', 'WOW', 'HAHA', 'SAD', 'ANGRY', 'THANKFUL') DEFAULT 'NONE',
+  PRIMARY KEY (`page_id`,`post_id`,`comment_id`,`fb_id`),
+  KEY `fb_id` (`fb_id`),
+  KEY `comment_id` (`comment_id`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`='tokudb_zlib';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
