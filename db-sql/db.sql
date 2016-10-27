@@ -1,10 +1,8 @@
--- mysqldump --no-data sincere
-
--- MySQL dump 10.13  Distrib 5.5.35, for FreeBSD10.0 (amd64)
+-- MySQL dump 10.15  Distrib 10.0.27-MariaDB, for debian-linux-gnu (x86_64)
 --
--- Host: 194.47.148.113    Database: sincere
+-- Host: localhost    Database: sincere
 -- ------------------------------------------------------
--- Server version	5.5.36-tokudb-7.1.5-MariaDB-log
+-- Server version	10.0.27-MariaDB-1~trusty
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -29,7 +27,7 @@ CREATE TABLE `application` (
   `name` varchar(256) DEFAULT NULL,
   `namespace` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -49,9 +47,30 @@ CREATE TABLE `comment` (
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`page_id`,`post_id`,`id`),
   KEY `comment_id` (`id`),
-  KEY `fb_id` (`fb_id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+  KEY `fb_id` (`fb_id`),
+  KEY `created_timeIDX` (`created_time`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `comments`
+--
+
+DROP TABLE IF EXISTS `comments`;
+/*!50001 DROP VIEW IF EXISTS `comments`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `comments` (
+  `page_id` tinyint NOT NULL,
+  `post_id` tinyint NOT NULL,
+  `id` tinyint NOT NULL,
+  `fb_id` tinyint NOT NULL,
+  `page_name` tinyint NOT NULL,
+  `fb_name` tinyint NOT NULL,
+  `message` tinyint NOT NULL,
+  `created_time` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `crawl_stat`
@@ -65,7 +84,7 @@ CREATE TABLE `crawl_stat` (
   `name` text CHARACTER SET utf8,
   `max(post.created_time)` timestamp NULL DEFAULT NULL,
   `entropy` float DEFAULT NULL
-) ENGINE=TokuDB DEFAULT CHARSET=latin1;
+) ENGINE=TokuDB DEFAULT CHARSET=latin1 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -80,7 +99,7 @@ CREATE TABLE `fb_user` (
   `name` text,
   `category` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -97,8 +116,9 @@ CREATE TABLE `likedby` (
   `fb_id` bigint(20) NOT NULL,
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   PRIMARY KEY (`page_id`,`post_id`,`comment_id`,`fb_id`),
-  KEY `fb_id` (`fb_id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+  KEY `fb_id` (`fb_id`),
+  KEY `comment_id` (`comment_id`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`='tokudb_zlib';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -118,7 +138,7 @@ CREATE TABLE `message_tags` (
   `type` varchar(256) DEFAULT NULL,
   `name` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`='tokudb_fast';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -134,7 +154,7 @@ CREATE TABLE `page` (
   `category` text,
   PRIMARY KEY (`id`),
   KEY `page_id` (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -150,7 +170,7 @@ CREATE TABLE `place` (
   `loc_latitude` float DEFAULT NULL,
   `loc_longitude` float DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -191,8 +211,9 @@ CREATE TABLE `post` (
   KEY `post_id` (`id`),
   KEY `created_time_index` (`created_time`),
   KEY `comments_count_index` (`comments_count`),
-  KEY `from_id_index` (`from_id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+  KEY `from_id_index` (`from_id`),
+  KEY `place_id_index` (`place_id`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -208,9 +229,26 @@ CREATE TABLE `shares` (
   `who` bigint(20) unsigned NOT NULL,
   `created_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   `updated_time` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`,`post_id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+  PRIMARY KEY (`id`,`post_id`),
+  KEY `post_id` (`post_id`)
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`='tokudb_fast';
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Temporary table structure for view `sharesView`
+--
+
+DROP TABLE IF EXISTS `sharesView`;
+/*!50001 DROP VIEW IF EXISTS `sharesView`*/;
+SET @saved_cs_client     = @@character_set_client;
+SET character_set_client = utf8;
+/*!50001 CREATE TABLE `sharesView` (
+  `page_id` tinyint NOT NULL,
+  `post_id` tinyint NOT NULL,
+  `fb_id` tinyint NOT NULL,
+  `created_time` tinyint NOT NULL
+) ENGINE=MyISAM */;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Temporary table structure for view `status`
@@ -223,7 +261,7 @@ SET character_set_client = utf8;
 /*!50001 CREATE TABLE `status` (
   `Table Name` tinyint NOT NULL,
   `# Rows` tinyint NOT NULL,
-  `Total Size MB` tinyint NOT NULL
+  `Total Size GB` tinyint NOT NULL
 ) ENGINE=MyISAM */;
 SET character_set_client = @saved_cs_client;
 
@@ -244,7 +282,7 @@ CREATE TABLE `story_tags` (
   `type` varchar(256) DEFAULT NULL,
   `name` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -259,8 +297,66 @@ CREATE TABLE `with_tags` (
   `post_id` bigint(20) NOT NULL DEFAULT '0',
   `fb_id` bigint(20) NOT NULL DEFAULT '0',
   PRIMARY KEY (`page_id`,`post_id`,`fb_id`)
-) ENGINE=TokuDB DEFAULT CHARSET=utf8 ROW_FORMAT=TOKUDB_QUICKLZ;
+) ENGINE=TokuDB DEFAULT CHARSET=utf8 `compression`=TOKUDB_LZMA;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Final view structure for view `comments`
+--
+
+/*!50001 DROP TABLE IF EXISTS `comments`*/;
+/*!50001 DROP VIEW IF EXISTS `comments`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = latin1 */;
+/*!50001 SET character_set_results     = latin1 */;
+/*!50001 SET collation_connection      = latin1_swedish_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `comments` AS select `comment`.`page_id` AS `page_id`,`comment`.`post_id` AS `post_id`,`comment`.`id` AS `id`,`comment`.`fb_id` AS `fb_id`,`page`.`name` AS `page_name`,`fb_user`.`name` AS `fb_name`,`comment`.`message` AS `message`,`comment`.`created_time` AS `created_time` from ((`comment` left join `page` on((`comment`.`page_id` = `page`.`id`))) left join `fb_user` on((`comment`.`fb_id` = `fb_user`.`id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `posts`
+--
+
+/*!50001 DROP TABLE IF EXISTS `posts`*/;
+/*!50001 DROP VIEW IF EXISTS `posts`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = latin1 */;
+/*!50001 SET character_set_results     = latin1 */;
+/*!50001 SET collation_connection      = latin1_swedish_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `posts` AS select `post`.`id` AS `id`,`post`.`page_id` AS `page_id`,`page`.`name` AS `page_name`,`post`.`from_id` AS `from_id`,`fb_user`.`name` AS `from_name`,`post`.`message` AS `message`,`post`.`created_time` AS `created_time`,`post`.`updated_time` AS `updated_time`,`post`.`shares_count` AS `shares_count`,`post`.`likes_count` AS `likes_count`,`post`.`comments_count` AS `comments_count` from ((`post` join `page` on((`post`.`page_id` = `page`.`id`))) join `fb_user` on((`post`.`from_id` = `fb_user`.`id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `sharesView`
+--
+
+/*!50001 DROP TABLE IF EXISTS `sharesView`*/;
+/*!50001 DROP VIEW IF EXISTS `sharesView`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8 */;
+/*!50001 SET character_set_results     = utf8 */;
+/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `sharesView` AS select `p`.`page_id` AS `page_id`,`s`.`post_id` AS `post_id`,`s`.`who` AS `fb_id`,`s`.`created_time` AS `created_time` from (`shares` `s` join `post` `p` on((`s`.`post_id` = `p`.`id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 
 --
 -- Final view structure for view `status`
@@ -271,12 +367,12 @@ CREATE TABLE `with_tags` (
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8 */;
-/*!50001 SET character_set_results     = utf8 */;
-/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 SET character_set_client      = latin1 */;
+/*!50001 SET character_set_results     = latin1 */;
+/*!50001 SET collation_connection      = latin1_swedish_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
-/*!50001 VIEW `status` AS (select `information_schema`.`TABLES`.`TABLE_NAME` AS `Table Name`,format(`information_schema`.`TABLES`.`TABLE_ROWS`,0) AS `# Rows`,format(round(((`information_schema`.`TABLES`.`DATA_LENGTH` + `information_schema`.`TABLES`.`INDEX_LENGTH`) / (1024 * 1024)),2),2) AS `Total Size MB` from `information_schema`.`TABLES` where (`information_schema`.`TABLES`.`TABLE_SCHEMA` = 'sincere')) */;
+/*!50001 VIEW `status` AS select `information_schema`.`TABLES`.`TABLE_NAME` AS `Table Name`,format(`information_schema`.`TABLES`.`TABLE_ROWS`,0) AS `# Rows`,format(round(((`information_schema`.`TABLES`.`DATA_LENGTH` + `information_schema`.`TABLES`.`INDEX_LENGTH`) / ((1024 * 1024) * 1024)),2),2) AS `Total Size GB` from `information_schema`.`TABLES` where (`information_schema`.`TABLES`.`TABLE_SCHEMA` = 'sincere') order by `information_schema`.`TABLES`.`TABLE_ROWS` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -290,4 +386,4 @@ CREATE TABLE `with_tags` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-04-01  8:54:34
+-- Dump completed on 2016-10-27 12:38:46
